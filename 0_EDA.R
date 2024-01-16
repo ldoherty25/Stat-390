@@ -151,4 +151,5 @@ t_var <- covid %>%
   count(total_deaths) %>% 
   mutate(proportion = n / sum(n))
 
+#test commit
 
