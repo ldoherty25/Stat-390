@@ -5,6 +5,8 @@ library(tidyverse)
 library(tidymodels)
 library(ggplot2)
 library(reshape2)
+library(skimr)
+library(naniar)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -106,3 +108,32 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
 ## save files ----
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
+
+###########################################################
+
+#Target variable prep
+ggplot(data = eu_covid, mapping = aes(x = total_deaths)) +
+  geom_histogram()
+
+#graph the missingness of each variable
+gg_miss_var(eu_covid)
+
+##scale or normalize our target variable?
+#z-scaling
+eu_covid$total_deaths_z <- scale(eu_covid$total_deaths)
+ggplot(data = eu_covid, mapping = aes(x = total_deaths_z)) +
+  geom_histogram(bins=50)
+
+#min-max normalizing
+eu_covid$total_deaths_mm <- scale(eu_covid$total_deaths, center = min(eu_covid$total_deaths), 
+                                  scale = max(eu_covid$total_deaths) - min(eu_covid$total_deaths))
+ggplot(data = eu_covid, mapping = aes(x = total_deaths_mm)) +
+  geom_histogram(bins = 50)
+#getting error: Warning message: Removed 3091 rows containing non-finite values (`stat_bin()`).
+
+#range normalizing 
+eu_covid$total_deaths_rn <- (eu_covid$total_deaths - min(eu_covid$total_deaths)) / (max(eu_covid$total_deaths) - min(eu_covid$total_deaths))
+ggplot(data = eu_covid, mapping = aes(x = total_deaths_rn)) +
+  geom_histogram(bins=50)
+#error: Removed 37088 rows containing non-finite values (`stat_bin()`).
+
