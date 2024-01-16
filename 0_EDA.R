@@ -7,6 +7,8 @@ library(ggplot2)
 library(reshape2)
 library(skimr)
 library(naniar)
+library(visdat)
+library(lubridate)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -136,4 +138,17 @@ eu_covid$total_deaths_rn <- (eu_covid$total_deaths - min(eu_covid$total_deaths))
 ggplot(data = eu_covid, mapping = aes(x = total_deaths_rn)) +
   geom_histogram(bins=50)
 #error: Removed 37088 rows containing non-finite values (`stat_bin()`).
+
+#######
+# Target Variable distribution ----
+
+eu_covid %>% 
+  count(total_deaths) %>% 
+  mutate(proportion = n/sum(n))
+
+# inspecting target variable
+t_var <- covid %>% 
+  count(total_deaths) %>% 
+  mutate(proportion = n / sum(n))
+
 
