@@ -32,8 +32,7 @@ skimr::skim_without_charts(covid)
 # inspecting missingness
 missing_prop <- covid %>% 
   naniar::miss_var_summary() %>% 
-  filter(pct_miss > 0) %>% 
-  DT::datatable()
+  filter(pct_miss > 0) 
 
 # data completion rate by continent
 completion_by_continent <- covid %>%
@@ -51,7 +50,6 @@ overall_completion <- completion_by_continent %>%
 eu_covid <- covid %>% 
   filter(continent == "Europe") %>% 
   select(-continent,
-         -handwashing_facilities,
          -excess_mortality_cumulative_absolute,
          -excess_mortality_cumulative,
          -excess_mortality,
@@ -82,6 +80,29 @@ missing_graph <- eu_covid %>%
 # checking final dimensions
 dim(eu_covid)
 
+#################################
+# removing redundant variables
+no_red_eu_covid <- eu_covid %>%
+  select(-total_vaccinations_per_hundred,
+         -hosp_patients_per_million,
+         -new_people_vaccinated_smoothed_per_hundred,
+         -new_people_vaccinated_smoothed,
+         -new_vaccinations_smoothed,
+         -new_vaccinations_smoothed_per_million,
+         -new_tests_per_thousand,
+         -total_tests_per_thousand,
+         -new_tests_smoothed_per_thousand,
+         -new_tests_smoothed,
+         -new_deaths_smoothed_per_million,
+         -new_deaths_smoothed,
+         -new_deaths_per_million,
+         -total_deaths_per_million,
+         -new_cases_smoothed_per_million,
+         -new_cases_smoothed,
+         -new_cases_per_million,
+         -total_cases_per_million)
+
+dim(no_red_eu_covid)
 
 ## correlation matrix ----
 
