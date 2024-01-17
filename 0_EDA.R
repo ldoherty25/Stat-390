@@ -3,6 +3,7 @@
 
 # load packages ----
 library(tidyverse)
+library(tidymodels)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -20,8 +21,17 @@ covid <- read_csv('data/data.csv') %>%
 # data quality assurance
 skimr::skim_without_charts(covid)
 
+# calculate average of identical variables
+mutated_covid <- covid %>%
+  mutate(average_confirmed = rowMeans(select(., jhu_confirmed, owid_total_cases, ox_confirmed_cases), na.rm = TRUE),
+         average_deaths = rowMeans(select(., jhu_deaths, owid_total_deaths, ox_confirmed_deaths), na.rm = TRUE),
+         average_stringency_index = rowMeans(select(., owid_stringency_index, ox_stringency_index), na.rm = TRUE)) %>%
+  select(-jhu_confirmed, -owid_total_cases, -ox_confirmed_cases, 
+         -jhu_deaths, -owid_total_deaths, -ox_confirmed_deaths, 
+         -owid_stringency_index, -ox_stringency_index)
+
 # missingness per variable
-prop_non_missing <- covid %>% 
+prop_non_missing <- mutated_covid %>% 
   summarise(across(everything(), ~sum(!is.na(.)) / n())) %>% 
   pivot_longer(cols = everything(), names_to = "variable", values_to = "prop_non_missing")
 
@@ -31,8 +41,31 @@ columns_to_remove <- prop_non_missing %>%
   pull(variable)
 
 # removing unwanted columns
-covid_cleaned <- covid %>% 
+covid_cleaned <- mutated_covid %>% 
   select(-all_of(columns_to_remove))
 
 # skim after clearing missingness
 skimr::skim_without_charts(covid_cleaned)
+
+selected_data <- covid_cleaned %>%
+  select(country, date, average_confirmed, average_deaths,
+         owid_new_cases, owid_new_deaths, average_stringency_index,
+         owid_population, owid_population_density, owid_median_age,
+         owid_aged_65_older, owid_aged_70_older, owid_gdp_per_capita, owid_cardiovasc_death_rate,
+         owid_diabetes_prevalence, owid_female_smokers, owid_male_smokers, owid_hospital_beds_per_thousand, 
+         owid_life_expectancy, ox_c1_school_closing, ox_c1_flag,
+         ox_c2_workplace_closing, ox_c2_flag, ox_c3_cancel_public_events,
+         ox_c3_flag, ox_c4_restrictions_on_gatherings, ox_c4_flag, ox_c6_stay_at_home_requirements,
+         ox_c7_restrictions_on_internal_movement,
+         ox_c8_international_travel_controls, ox_e1_income_support,
+         ox_e2_debt_or_contract_relief, ox_e3_fiscal_measures, ox_e4_international_support,
+         ox_h1_public_information_campaigns, ox_h1_flag, ox_h2_testing_policy,
+         ox_h3_contact_tracing, ox_h4_emergency_investment_in_healthcare,
+         ox_h5_investment_in_vaccines, ox_government_response_index,
+         ox_containment_health_index, ox_economic_support_index,
+         marioli_effective_reproduction_rate, marioli_ci_65_u, marioli_ci_65_l,
+         marioli_ci_95_u, marioli_ci_95_l,
+         google_mobility_change_grocery_and_pharmacy,
+         google_mobility_change_parks, google_mobility_change_transit_stations,
+         google_mobility_change_retail_and_recreation, google_mobility_change_residential,
+         google_mobility_change_workplaces, sdsn_effective_reproduction_rate_smoothed)
