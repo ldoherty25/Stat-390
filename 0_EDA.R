@@ -54,7 +54,7 @@ covid_cleaned <- mutated_covid %>%
   select(-all_of(columns_to_remove))
 
 # selecting only non-redundant variables
-processed_covid <- covid_cleaned %>%
+preprocessed_covid <- covid_cleaned %>%
   select(country, date, average_confirmed, average_deaths,
          owid_new_cases, owid_new_deaths, average_stringency_index,
          owid_population, owid_population_density, owid_median_age,
@@ -78,19 +78,19 @@ processed_covid <- covid_cleaned %>%
          google_mobility_change_workplaces, sdsn_effective_reproduction_rate_smoothed)
 
 # skim after clearing issues
-skimr::skim_without_charts(processed_covid)
+skimr::skim_without_charts(preprocessed_covid)
 
 
 ## assessing final missingness ----
 
 # inspecting missingness again
-missing_prop_covid <- processed_covid %>% 
+missing_prop_covid <- preprocessed_covid %>% 
   naniar::miss_var_summary() %>% 
   filter(pct_miss >= 0) %>% 
   DT::datatable()
 
 # create graph
-missing_graph <- processed_covid %>%
+missing_graph <- preprocessed_covid %>%
   naniar::gg_miss_var() +
   labs(title = "Graph 1: Missing Data")
 
@@ -98,7 +98,7 @@ missing_graph <- processed_covid %>%
 ## correlation matrix ----
 
 # filter out numerical data
-numerical_data <- processed_covid %>% select_if(is.numeric)
+numerical_data <- preprocessed_covid %>% select_if(is.numeric)
 
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
@@ -120,18 +120,36 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
 
 
+## Examining the Target Variable
+# Target Variable distribution ----
+# t_var <- preprocessed_covid %>% 
+#   count(average_deaths) %>% 
+#   mutate(proportion = n / sum(n))
+# What exactly is the code above trying to achieve?
+
+#Target variable prep
+ggplot(data = preprocessed_covid, mapping = aes(x = average_deaths)) +
+  geom_histogram(bins= 80)
+
+
+# alternative target variable consideration ----
+
+# graphing distribution
+tv_distribution_log <- preprocessed_covid %>%
+  filter(!is.na(average_deaths)) %>%
+  ggplot() +
+  geom_histogram(aes(x = average_deaths), bins = 50) +
+  scale_x_log10() +
+  labs(title = "Graph 2: Distribution of Target Variable",
+       x = "Average Deaths (log)",
+       y = "Count") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 ## save files ----
+save(preprocessed_covid, file = "data/preprocessed/preprocessed_covid.rda")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
-
-
-## Examining the Target Variable
-# Target Variable distribution ----
-t_var <- processed_covid %>% 
-  count(average_deaths) %>% 
-  mutate(proportion = n / sum(n))
-
-#Target variable prep
-ggplot(data = processed_covid, mapping = aes(x = average_deaths)) +
-  geom_histogram(bins= 80)
+save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
