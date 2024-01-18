@@ -121,6 +121,7 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
 
 
 ## save files ----
+save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 
@@ -133,4 +134,4 @@ t_var <- processed_covid %>%
 
 #Target variable prep
 ggplot(data = processed_covid, mapping = aes(x = average_deaths)) +
-  geom_histogram(bins= 80)#ask help
+  geom_histogram(bins= 80)
