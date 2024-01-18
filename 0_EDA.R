@@ -94,13 +94,11 @@ missing_graph <- processed_covid %>%
   naniar::gg_miss_var() +
   labs(title = "Graph 1: Missing Data")
 
-naniar::gg_miss_var(processed_covid)
 
 ## correlation matrix ----
 
 # filter out numerical data
 numerical_data <- processed_covid %>% select_if(is.numeric)
-#QUESTION: why arre we filtering out numerical data?
 
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
@@ -123,9 +121,9 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
 
 
 ## save files ----
-save(missing_prop_covid, file = "visuals/missing_prop_covid")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
+
 
 ## Examining the Target Variable
 # Target Variable distribution ----
