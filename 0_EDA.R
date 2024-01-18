@@ -119,6 +119,7 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
 
+
 ## save files ----
 save(missing_prop_covid, file = "visuals/missing_prop_covid")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
