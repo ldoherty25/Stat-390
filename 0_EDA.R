@@ -4,6 +4,7 @@
 # load packages ----
 library(tidyverse)
 library(tidymodels)
+library(reshape2)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -15,11 +16,14 @@ set.seed(1234)
 ## load data ----
 
 # read and clean
-covid <- read_csv('data/data.csv') %>% 
+covid <- read_csv('data/raw/data.csv') %>% 
   janitor::clean_names()
 
 # data quality assurance
 skimr::skim_without_charts(covid)
+
+
+## basic EDA ----
 
 # calculate average of identical variables
 mutated_covid <- covid %>%
@@ -28,7 +32,12 @@ mutated_covid <- covid %>%
          average_stringency_index = rowMeans(select(., owid_stringency_index, ox_stringency_index), na.rm = TRUE)) %>%
   select(-jhu_confirmed, -owid_total_cases, -ox_confirmed_cases, 
          -jhu_deaths, -owid_total_deaths, -ox_confirmed_deaths, 
-         -owid_stringency_index, -ox_stringency_index)
+         -owid_stringency_index, -ox_stringency_index) %>% 
+  mutate(
+    average_confirmed = replace(average_confirmed, is.nan(average_confirmed), NA),
+    average_deaths = replace(average_deaths, is.nan(average_deaths), NA),
+    average_stringency_index = replace(average_stringency_index, is.nan(average_stringency_index), NA)
+    )
 
 # missingness per variable
 prop_non_missing <- mutated_covid %>% 
@@ -44,10 +53,8 @@ columns_to_remove <- prop_non_missing %>%
 covid_cleaned <- mutated_covid %>% 
   select(-all_of(columns_to_remove))
 
-# skim after clearing missingness
-skimr::skim_without_charts(covid_cleaned)
-
-selected_data <- covid_cleaned %>%
+# selecting only non-redundant variables
+processed_covid <- covid_cleaned %>%
   select(country, date, average_confirmed, average_deaths,
          owid_new_cases, owid_new_deaths, average_stringency_index,
          owid_population, owid_population_density, owid_median_age,
@@ -69,3 +76,50 @@ selected_data <- covid_cleaned %>%
          google_mobility_change_parks, google_mobility_change_transit_stations,
          google_mobility_change_retail_and_recreation, google_mobility_change_residential,
          google_mobility_change_workplaces, sdsn_effective_reproduction_rate_smoothed)
+
+# skim after clearing issues
+skimr::skim_without_charts(processed_covid)
+
+
+## assessing final missingness ----
+
+# inspecting missingness again
+missing_prop_covid <- processed_covid %>% 
+  naniar::miss_var_summary() %>% 
+  filter(pct_miss >= 0) %>% 
+  DT::datatable()
+
+# create graph
+missing_graph <- processed_covid %>%
+  naniar::gg_miss_var() +
+  labs(title = "Graph 1: Missing Data")
+
+
+## correlation matrix ----
+
+# filter out numerical data
+numerical_data <- processed_covid %>% select_if(is.numeric)
+
+# create a correlation matrix
+correlation_matrix <- cor(numerical_data, use = "complete.obs")
+
+# establish threshold to reduce dimensions
+correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
+
+# adapt to ggplot2
+melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
+
+## save files ----
+save(missing_prop_covid, file = "visuals/missing_prop_covid")
+save(correlation_graph, file = "visuals/correlation_graph.rda")
+save(missing_graph, file = "visuals/missing_graph.rda")
