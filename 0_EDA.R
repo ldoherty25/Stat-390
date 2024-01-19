@@ -147,6 +147,14 @@ tv_distribution_log <- preprocessed_covid %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 
+# miscellaneous ----
+
+# determining beginning and start dates of data collection
+preprocessed_covid$date <- as.Date(preprocessed_covid$date)
+first_date <- min(preprocessed_covid$date, na.rm = TRUE)
+last_date <- max(preprocessed_covid$date, na.rm = TRUE)
+
+
 ## save files ----
 save(preprocessed_covid, file = "data/preprocessed/preprocessed_covid.rda")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
