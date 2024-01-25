@@ -152,9 +152,9 @@ tv_distribution_log <- preprocessed_covid_multi %>%
 # miscellaneous ----
 
 # determining beginning and start dates of data collection
-preprocessed_covid$date <- as.Date(preprocessed_covid$date)
-first_date <- min(preprocessed_covid$date, na.rm = TRUE)
-last_date <- max(preprocessed_covid$date, na.rm = TRUE)
+preprocessed_covid_multi$date <- as.Date(preprocessed_covid_multi$date)
+first_date <- min(preprocessed_covid_multi$date, na.rm = TRUE)
+last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 
 # working on univariate dataset ----
 preprocessed_covid_uni <- preprocessed_covid_multi %>% 
