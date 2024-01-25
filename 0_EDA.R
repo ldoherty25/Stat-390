@@ -5,6 +5,8 @@
 library(tidyverse)
 library(tidymodels)
 library(reshape2)
+library(lubridate)
+library(forecast)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -28,14 +30,14 @@ skimr::skim_without_charts(covid)
 # calculate average of identical variables
 mutated_covid <- covid %>%
   mutate(average_confirmed = rowMeans(select(., jhu_confirmed, owid_total_cases, ox_confirmed_cases), na.rm = TRUE),
-         average_deaths = rowMeans(select(., jhu_deaths, owid_total_deaths, ox_confirmed_deaths), na.rm = TRUE),
+         average_cummulative_deaths = rowMeans(select(., jhu_deaths, owid_total_deaths, ox_confirmed_deaths), na.rm = TRUE),
          average_stringency_index = rowMeans(select(., owid_stringency_index, ox_stringency_index), na.rm = TRUE)) %>%
   select(-jhu_confirmed, -owid_total_cases, -ox_confirmed_cases, 
          -jhu_deaths, -owid_total_deaths, -ox_confirmed_deaths, 
          -owid_stringency_index, -ox_stringency_index) %>% 
   mutate(
     average_confirmed = replace(average_confirmed, is.nan(average_confirmed), NA),
-    average_deaths = replace(average_deaths, is.nan(average_deaths), NA),
+    average_cummulative_deaths = replace(average_cummulative_deaths, is.nan(average_cummulative_deaths), NA),
     average_stringency_index = replace(average_stringency_index, is.nan(average_stringency_index), NA)
     )
 
@@ -54,8 +56,8 @@ covid_cleaned <- mutated_covid %>%
   select(-all_of(columns_to_remove))
 
 # selecting only non-redundant variables
-preprocessed_covid <- covid_cleaned %>%
-  select(country, date, average_confirmed, average_deaths,
+preprocessed_covid_multi <- covid_cleaned %>%
+  select(country, date, average_confirmed, average_cummulative_deaths,
          owid_new_cases, owid_new_deaths, average_stringency_index,
          owid_population, owid_population_density, owid_median_age,
          owid_aged_65_older, owid_aged_70_older, owid_gdp_per_capita, owid_cardiovasc_death_rate,
@@ -78,19 +80,19 @@ preprocessed_covid <- covid_cleaned %>%
          google_mobility_change_workplaces, sdsn_effective_reproduction_rate_smoothed)
 
 # skim after clearing issues
-skimr::skim_without_charts(preprocessed_covid)
+skimr::skim_without_charts(preprocessed_covid_multi)
 
 
 ## assessing final missingness ----
 
 # inspecting missingness again
-missing_prop_covid <- preprocessed_covid %>% 
+missing_prop_covid <- preprocessed_covid_multi %>% 
   naniar::miss_var_summary() %>% 
   filter(pct_miss >= 0) %>% 
   DT::datatable()
 
 # create graph
-missing_graph <- preprocessed_covid %>%
+missing_graph <- preprocessed_covid_multi %>%
   naniar::gg_miss_var() +
   labs(title = "Graph 1: Missing Data")
 
@@ -98,7 +100,7 @@ missing_graph <- preprocessed_covid %>%
 ## correlation matrix ----
 
 # filter out numerical data
-numerical_data <- preprocessed_covid %>% select_if(is.numeric)
+numerical_data <- preprocessed_covid_multi %>% select_if(is.numeric)
 
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
@@ -122,34 +124,40 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
 
 ## Examining the Target Variable
 # Target Variable distribution ----
-# t_var <- preprocessed_covid %>% 
-#   count(average_deaths) %>% 
+# t_var <- preprocessed_covid_multi %>% 
+#   count(average_cummulative_deaths) %>% 
 #   mutate(proportion = n / sum(n))
 # What exactly is the code above trying to achieve?
 
-#Target variable prep
-ggplot(data = preprocessed_covid, mapping = aes(x = average_deaths)) +
-  geom_histogram(bins= 80)
+# #Target variable prep
+# ggplot(data = preprocessed_covid_multi, mapping = aes(x = average_cummulative_deaths)) +
+#   geom_histogram(bins= 80)
 
 
 # alternative target variable consideration ----
 
-# graphing distribution
-tv_distribution_log <- preprocessed_covid %>%
-  filter(!is.na(average_deaths)) %>%
-  ggplot() +
-  geom_histogram(aes(x = average_deaths), bins = 50) +
-  scale_x_log10() +
+# graphing distribution with square root transformation
+tv_distribution_log <- preprocessed_covid_multi %>%
+  filter(!is.na(owid_new_deaths)) %>%
+  ggplot(aes(x = owid_new_deaths)) +
+  geom_histogram(bins = 30, fill = "red", color = "black") +  # Adjusted bin number and added colors
+  scale_x_sqrt(breaks = pretty_breaks(n = 5)) +
   labs(title = "Graph 2: Distribution of Target Variable",
-       x = "Average Deaths (log)",
+       x = "New Deaths (sqrt)",
        y = "Count") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
 
 
+# creating a univariate dataset ----
+preprocessed_covid_uni <- preprocessed_covid_multi %>% 
+  select(date, owid_new_deaths)
+
+
 ## save files ----
-save(preprocessed_covid, file = "data/preprocessed/preprocessed_covid.rda")
+save(preprocessed_covid_multi, file = "data/preprocessed/preprocessed_covid_multi.rda")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
+save(preprocessed_covid_uni, file = "data/preprocessed/preprocessed_covid_multi.rda")
