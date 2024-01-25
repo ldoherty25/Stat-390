@@ -149,14 +149,13 @@ tv_distribution_log <- preprocessed_covid_multi %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 
-<<<<<<< HEAD
 # miscellaneous ----
 
 # determining beginning and start dates of data collection
 preprocessed_covid$date <- as.Date(preprocessed_covid$date)
 first_date <- min(preprocessed_covid$date, na.rm = TRUE)
 last_date <- max(preprocessed_covid$date, na.rm = TRUE)
-=======
+
 # working on univariate dataset ----
 preprocessed_covid_uni <- preprocessed_covid_multi %>% 
   select(date, owid_new_deaths)
@@ -188,7 +187,6 @@ pacf <- ggplot(data.frame(Lag=1:lags_pacf, PACF=pacf_vals$acf[-1]), aes(x=Lag, y
   geom_hline(yintercept=0) +
   theme_minimal() +
   labs(title="Partial Autocorrelation Function (PACF)", x="Lags", y="PACF")
->>>>>>> maria
 
 
 ## save files ----
