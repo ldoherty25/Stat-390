@@ -149,9 +149,37 @@ tv_distribution_log <- preprocessed_covid_multi %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 
-# creating a univariate dataset ----
+# working on univariate dataset ----
 preprocessed_covid_uni <- preprocessed_covid_multi %>% 
   select(date, owid_new_deaths)
+
+# converting date to row index for plotting against new deaths
+afc_pacf_preprocessed_covid_uni <- preprocessed_covid_uni %>%
+  filter(!is.na(owid_new_deaths)) %>%
+  arrange(date) %>%
+  mutate(t = row_number())
+
+# calculating ACF and PACF
+acf_vals <- acf(afc_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
+pacf_vals <- pacf(afc_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
+
+# adjusting the number of lags
+lags_acf <- length(acf_vals$acf) - 1
+lags_pacf <- length(pacf_vals$acf) - 1
+
+# graphing acf
+acf <- ggplot(data.frame(Lag=1:lags_acf, ACF=acf_vals$acf[-1]), aes(x=Lag, y=ACF)) +
+  geom_bar(stat="identity", fill="grey") +
+  geom_hline(yintercept=0) +
+  theme_minimal() +
+  labs(title="Autocorrelation Function (ACF)", x="Lags", y="ACF")
+
+# graphing pacf
+pacf <- ggplot(data.frame(Lag=1:lags_pacf, PACF=pacf_vals$acf[-1]), aes(x=Lag, y=PACF)) +
+  geom_bar(stat="identity", fill="grey") +
+  geom_hline(yintercept=0) +
+  theme_minimal() +
+  labs(title="Partial Autocorrelation Function (PACF)", x="Lags", y="PACF")
 
 
 ## save files ----
@@ -160,4 +188,5 @@ save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
-save(preprocessed_covid_uni, file = "data/preprocessed/preprocessed_covid_multi.rda")
+save(preprocessed_covid_uni, file = "data/preprocessed/preprocessed_covid_uni.rda")
+
