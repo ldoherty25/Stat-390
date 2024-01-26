@@ -160,27 +160,27 @@ last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 preprocessed_covid_uni <- preprocessed_covid_multi %>% 
   select(date, owid_new_deaths)
 
-# determining standard error and bounds
-se <- 1 / sqrt(nrow(afc_pacf_preprocessed_covid_uni))
-ub <- se * 1.96
-lb <- -se * 1.96
-
 # converting date to row index for plotting against new deaths
-afc_pacf_preprocessed_covid_uni <- preprocessed_covid_uni %>%
+acf_pacf_preprocessed_covid_uni <- preprocessed_covid_uni %>%
   filter(!is.na(owid_new_deaths)) %>%
   arrange(date) %>%
   mutate(t = row_number())
 
+# determining standard error and bounds
+se <- 1 / sqrt(nrow(acf_pacf_preprocessed_covid_uni))
+ub <- se * 1.96
+lb <- -se * 1.96
+
 # calculating ACF and PACF
-acf_vals <- acf(afc_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
-pacf_vals <- pacf(afc_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
+acf_vals <- acf(acf_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
+pacf_vals <- pacf(acf_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
 
 # adjusting the number of lags
 lags_acf <- length(acf_vals$acf) - 1
 lags_pacf <- length(pacf_vals$acf) - 1
 
 # graphing acf
-acf_plot <- ggplot(data.frame(Lag = 1:num_lags_acf, ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
+acf_plot <- ggplot(data.frame(Lag = 1:lags_acf, ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
   geom_bar(stat = "identity", fill = "grey") +
   geom_hline(yintercept = 0) +
   geom_hline(yintercept = ub, color = "blue") +
@@ -189,7 +189,7 @@ acf_plot <- ggplot(data.frame(Lag = 1:num_lags_acf, ACF = acf_vals$acf[-1]), aes
   labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
 
 # graphing pacf
-pacf_plot <- ggplot(data.frame(Lag = 1:num_lags_pacf, PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
+pacf_plot <- ggplot(data.frame(Lag = 1:lags_pacf, PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
   geom_bar(stat = "identity", fill="grey") +
   geom_hline(yintercept = 0) +
   geom_hline(yintercept = ub, color = "blue") +
