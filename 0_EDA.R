@@ -27,6 +27,7 @@ covid <- read_csv('data/raw/data.csv') %>%
 skimr::skim_without_charts(covid)
 
 
+
 # working through multivariate dataset, i ----
 
 # calculate average of identical variables
@@ -83,6 +84,24 @@ preprocessed_covid_multi <- covid_cleaned %>%
 
 # skim after clearing issues
 skimr::skim_without_charts(preprocessed_covid_multi)
+
+
+## attending to unexpected negative values ----
+
+# looking at suspicious negative values
+negative_values_dataset <- preprocessed_covid_multi %>%
+  filter(owid_new_cases < 0 | 
+           owid_new_deaths < 0 | 
+           ox_e3_fiscal_measures < 0 | 
+           ox_e4_international_support < 0) %>% 
+  select(country,owid_new_cases, owid_new_deaths, ox_e3_fiscal_measures, ox_e4_international_support, marioli_effective_reproduction_rate)
+
+# reverting to absolute values where necessary
+preprocessed_covid_multi <- preprocessed_covid_multi %>%
+  mutate(owid_new_cases = abs(owid_new_cases),
+         owid_new_deaths = abs(owid_new_deaths),
+         ox_e3_fiscal_measures = abs(ox_e3_fiscal_measures),
+         ox_e4_international_support = abs(ox_e4_international_support))
 
 
 ## assessing final missingness ----
@@ -145,6 +164,7 @@ tv_distribution_log <- preprocessed_covid_multi %>%
 preprocessed_covid_multi$date <- as.Date(preprocessed_covid_multi$date)
 first_date <- min(preprocessed_covid_multi$date, na.rm = TRUE)
 last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
+
 
 
 # working through univariate dataset, i ----
@@ -267,6 +287,9 @@ par(mfrow = c(1, 1))
 
 ## checking if the series is stationary ----
 
+# creating differenced time series
+time_series_diff <- diff(time_series, differences = 1)
+
 # using `time_series_diff` as the differenced time series object
 adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
 
@@ -276,6 +299,7 @@ cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
 
 # plotting the differenced series (needs saving)
 plot(time_series_diff, main = "Differenced Time Series")
+
 
 
 # saving files ----
