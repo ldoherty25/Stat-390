@@ -168,43 +168,43 @@ uni_countries <- preprocessed_covid_multi %>%
 
 china <- preprocessed_covid_multi %>%
   filter(country == "China", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 japan <- preprocessed_covid_multi %>%
   filter(country == "Japan", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 france <- preprocessed_covid_multi %>%
   filter(country == "France", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 iran <- preprocessed_covid_multi %>%
   filter(country == "Iran, Islamic Rep.", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 italy <- preprocessed_covid_multi %>%
   filter(country == "Italy", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 us <- preprocessed_covid_multi %>%
   filter(country == "United States", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 switzerland <- preprocessed_covid_multi %>%
   filter(country == "Switzerland", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 uk <- preprocessed_covid_multi %>%
   filter(country == "United Kingdom", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 netherlands <- preprocessed_covid_multi %>%
   filter(country == "Netherlands", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 germany <- preprocessed_covid_multi %>%
   filter(country == "Germany", owid_new_deaths > 0) %>% 
-  select(date, owid_new_cases)
+  select(date, owid_new_deaths)
 
 
 ## constructing ACF and PACF visualizations for selected countries (aggregated) ----
