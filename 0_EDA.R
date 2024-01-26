@@ -290,7 +290,7 @@ par(mfrow = c(1, 1))
 # creating differenced time series
 time_series_diff <- diff(time_series, differences = 1)
 
-# using `time_series_diff` as the differenced time series object
+# using time_series_diff as the differenced time series object
 adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
 
 # checking the test statistic and p-value ("p-value smaller than printed p-value" above)
