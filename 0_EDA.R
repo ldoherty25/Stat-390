@@ -1,5 +1,6 @@
 ## EDA
 
+# primary checks ----
 
 ## load packages ----
 library(tidyverse)
@@ -26,7 +27,7 @@ covid <- read_csv('data/raw/data.csv') %>%
 skimr::skim_without_charts(covid)
 
 
-## basic inspection ----
+# working through multivariate dataset, i ----
 
 # calculate average of identical variables
 mutated_covid <- covid %>%
@@ -146,7 +147,7 @@ first_date <- min(preprocessed_covid_multi$date, na.rm = TRUE)
 last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 
 
-## univariate models preprocessing ----
+# working through univariate dataset, i ----
 
 # selecting countries for univariate models
 uni_countries <- preprocessed_covid_multi %>%
@@ -264,7 +265,20 @@ plot(residuals, main = "Residuals", xlab = "Time", ylab = "Residuals", col = "re
 par(mfrow = c(1, 1))
 
 
-## save files ----
+## checking if the series is stationary ----
+
+# using `time_series_diff` as the differenced time series object
+adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
+
+# checking the test statistic and p-value ("p-value smaller than printed p-value" above)
+cat("ADF Test Statistic:", adf_test_result_diff$statistic, "\n")
+cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
+
+# plotting the differenced series (needs saving)
+plot(time_series_diff, main = "Differenced Time Series")
+
+
+# saving files ----
 save(preprocessed_covid_multi, file = "data/preprocessed/multivariate/preprocessed_covid_multi.rda")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
