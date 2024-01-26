@@ -7,6 +7,7 @@ library(tidymodels)
 library(reshape2)
 library(lubridate)
 library(forecast)
+library(modelr)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -25,7 +26,7 @@ covid <- read_csv('data/raw/data.csv') %>%
 skimr::skim_without_charts(covid)
 
 
-## basic EDA ----
+## basic inspection ----
 
 # calculate average of identical variables
 mutated_covid <- covid %>%
@@ -91,10 +92,10 @@ missing_prop_covid <- preprocessed_covid_multi %>%
   filter(pct_miss >= 0) %>% 
   DT::datatable()
 
-# create graph
+# creating graph
 missing_graph <- preprocessed_covid_multi %>%
   naniar::gg_miss_var() +
-  labs(title = "Graph 1: Missing Data")
+  labs(title = "Missing Data")
 
 
 ## correlation matrix ----
@@ -122,88 +123,162 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
 
 
-## Examining the Target Variable
-# Target Variable distribution ----
-# t_var <- preprocessed_covid_multi %>% 
-#   count(average_cummulative_deaths) %>% 
-#   mutate(proportion = n / sum(n))
-# What exactly is the code above trying to achieve?
-
-# #Target variable prep
-# ggplot(data = preprocessed_covid_multi, mapping = aes(x = average_cummulative_deaths)) +
-#   geom_histogram(bins= 80)
-
-
-# alternative target variable consideration ----
+## target variable consideration ----
 
 # graphing distribution with square root transformation
 tv_distribution_log <- preprocessed_covid_multi %>%
   filter(!is.na(owid_new_deaths)) %>%
   ggplot(aes(x = owid_new_deaths)) +
-  geom_histogram(bins = 30, fill = "red", color = "black") +  # Adjusted bin number and added colors
+  geom_histogram(bins = 30, fill = "red", color = "black") +
   scale_x_sqrt(breaks = pretty_breaks(n = 5)) +
-  labs(title = "Graph 2: Distribution of Target Variable",
+  labs(title = "Distribution of Target Variable",
        x = "New Deaths (sqrt)",
        y = "Count") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
 
 
-# miscellaneous ----
+## miscellaneous ----
 
 # determining beginning and start dates of data collection
 preprocessed_covid_multi$date <- as.Date(preprocessed_covid_multi$date)
 first_date <- min(preprocessed_covid_multi$date, na.rm = TRUE)
 last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 
-# working on univariate dataset ----
-preprocessed_covid_uni <- preprocessed_covid_multi %>% 
-  select(date, owid_new_deaths)
 
-# converting date to row index for plotting against new deaths
-acf_pacf_preprocessed_covid_uni <- preprocessed_covid_uni %>%
-  filter(!is.na(owid_new_deaths)) %>%
-  arrange(date) %>%
-  mutate(t = row_number())
+## univariate models preprocessing ----
 
-# determining standard error and bounds
-se <- 1 / sqrt(nrow(acf_pacf_preprocessed_covid_uni))
-ub <- se * 1.96
-lb <- -se * 1.96
+# selecting countries for univariate models
+uni_countries <- preprocessed_covid_multi %>%
+  group_by(country) %>%
+  summarize(
+    completeness = sum(!is.na(owid_new_deaths)) / n(),
+    earliest_death = ifelse(any(owid_new_deaths > 0),
+                            as.Date(min(date[owid_new_deaths > 0],
+                                        na.rm = TRUE)),
+                            NA_real_),
+    total_deaths = sum(owid_new_deaths, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  filter(total_deaths >= 1000, !is.na(earliest_death)) %>%
+  arrange(desc(completeness), earliest_death, desc(total_deaths)) %>%
+  slice_head(n = 10)
+
+# creating a dataset for each selected country
+
+china <- preprocessed_covid_multi %>%
+  filter(country == "China", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+japan <- preprocessed_covid_multi %>%
+  filter(country == "Japan", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+france <- preprocessed_covid_multi %>%
+  filter(country == "France", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+iran <- preprocessed_covid_multi %>%
+  filter(country == "Iran, Islamic Rep.", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+italy <- preprocessed_covid_multi %>%
+  filter(country == "Italy", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+us <- preprocessed_covid_multi %>%
+  filter(country == "United States", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+switzerland <- preprocessed_covid_multi %>%
+  filter(country == "Switzerland", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+uk <- preprocessed_covid_multi %>%
+  filter(country == "United Kingdom", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+netherlands <- preprocessed_covid_multi %>%
+  filter(country == "Netherlands", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+germany <- preprocessed_covid_multi %>%
+  filter(country == "Germany", owid_new_deaths > 0) %>% 
+  select(date, owid_new_cases)
+
+
+## constructing ACF and PACF visualizations for selected countries (aggregated) ----
+
+# defining a list of selected countries
+selected_countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", 
+                        "Italy", "United States", "Switzerland", 
+                        "United Kingdom", "Netherlands", "Germany")
+
+# creating a grouped dataset summing each day's new deaths
+uni_grouped_covid <- preprocessed_covid_multi %>%
+  filter(country %in% selected_countries) %>%
+  group_by(date) %>%
+  summarize(total_new_deaths = sum(owid_new_deaths, na.rm = TRUE)) %>%
+  ungroup() %>%
+  complete(date = seq(min(date), max(date), by = "day"), fill = list(total_new_deaths = 0))
 
 # calculating ACF and PACF
-acf_vals <- acf(acf_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
-pacf_vals <- pacf(acf_pacf_preprocessed_covid_uni$owid_new_deaths, plot = FALSE)
+acf_vals <- acf(uni_grouped_covid$total_new_deaths, plot = FALSE)
+pacf_vals <- pacf(uni_grouped_covid$total_new_deaths, plot = FALSE)
 
-# adjusting the number of lags
-lags_acf <- length(acf_vals$acf) - 1
-lags_pacf <- length(pacf_vals$acf) - 1
+# calculating bounds based on non-NA values
+n <- sum(!is.na(uni_grouped_covid$total_new_deaths))
+se <- 1 / sqrt(n)
 
-# graphing acf
-acf_plot <- ggplot(data.frame(Lag = 1:lags_acf, ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
+# producing the desired plots
+
+acf_plot <- ggplot(data.frame(Lag = 1:(length(acf_vals$acf)-1), ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
   geom_bar(stat = "identity", fill = "grey") +
   geom_hline(yintercept = 0) +
-  geom_hline(yintercept = ub, color = "blue") +
-  geom_hline(yintercept = lb, color = "blue") +
+  geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
   theme_minimal() +
   labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
 
-# graphing pacf
-pacf_plot <- ggplot(data.frame(Lag = 1:lags_pacf, PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
+pacf_plot <- ggplot(data.frame(Lag = 1:(length(pacf_vals$acf)-1), PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
   geom_bar(stat = "identity", fill="grey") +
   geom_hline(yintercept = 0) +
-  geom_hline(yintercept = ub, color = "blue") +
-  geom_hline(yintercept = lb, color = "blue") +
+  geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
   theme_minimal() +
   labs(title = "Partial Autocorrelation Function (PACF)", x = "Lags", y = "PACF")
 
 
+## data decomposition ----
+
+# generating plot components
+time_series <- ts(uni_grouped_covid$total_new_deaths)
+trend <- ma(time_series, order = 14)
+
+# calculating residuals
+residuals <- time_series - trend
+
+# joining plot components (needs saving)
+par(mfrow = c(3, 1))
+plot(time_series, main = "Observed", xlab = "", ylab = "New Deaths", col = "black", xaxt='n')
+plot(trend, main = "Trend", xlab = "", ylab = "Trend", col = "blue", xaxt='n')
+plot(residuals, main = "Residuals", xlab = "Time", ylab = "Residuals", col = "red")
+par(mfrow = c(1, 1))
+
+
 ## save files ----
-save(preprocessed_covid_multi, file = "data/preprocessed/preprocessed_covid_multi.rda")
+save(preprocessed_covid_multi, file = "data/preprocessed/multivariate/preprocessed_covid_multi.rda")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
-save(preprocessed_covid_uni, file = "data/preprocessed/preprocessed_covid_uni.rda")
+save(china, file = "data/preprocessed/univariate/china.rda")
+save(japan, file = "data/preprocessed/univariate/japan.rda")
+save(france, file = "data/preprocessed/univariate/france.rda")
+save(iran, file = "data/preprocessed/univariate/iran.rda")
+save(italy, file = "data/preprocessed/univariate/italy.rda")
+save(us, file = "data/preprocessed/univariate/us.rda")
+save(switzerland, file = "data/preprocessed/univariate/switzerland.rda")
+save(uk, file = "data/preprocessed/univariate/uk.rda")
+save(netherlands, file = "data/preprocessed/univariate/netherlands.rda")
+save(germany, file = "data/preprocessed/univariate/germany.rda")
 save(acf_plot, file = "visuals/acf_plot.rda")
 save(pacf_plot, file = "visuals/pacf_plot.rda")
