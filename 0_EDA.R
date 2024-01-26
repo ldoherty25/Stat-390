@@ -160,6 +160,11 @@ last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 preprocessed_covid_uni <- preprocessed_covid_multi %>% 
   select(date, owid_new_deaths)
 
+# determining standard error and bounds
+se <- 1 / sqrt(nrow(afc_pacf_preprocessed_covid_uni))
+ub <- se * 1.96
+lb <- -se * 1.96
+
 # converting date to row index for plotting against new deaths
 afc_pacf_preprocessed_covid_uni <- preprocessed_covid_uni %>%
   filter(!is.na(owid_new_deaths)) %>%
@@ -175,18 +180,22 @@ lags_acf <- length(acf_vals$acf) - 1
 lags_pacf <- length(pacf_vals$acf) - 1
 
 # graphing acf
-acf <- ggplot(data.frame(Lag=1:lags_acf, ACF=acf_vals$acf[-1]), aes(x=Lag, y=ACF)) +
-  geom_bar(stat="identity", fill="grey") +
-  geom_hline(yintercept=0) +
+acf_plot <- ggplot(data.frame(Lag = 1:num_lags_acf, ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = ub, color = "blue") +
+  geom_hline(yintercept = lb, color = "blue") +
   theme_minimal() +
-  labs(title="Autocorrelation Function (ACF)", x="Lags", y="ACF")
+  labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
 
 # graphing pacf
-pacf <- ggplot(data.frame(Lag=1:lags_pacf, PACF=pacf_vals$acf[-1]), aes(x=Lag, y=PACF)) +
-  geom_bar(stat="identity", fill="grey") +
-  geom_hline(yintercept=0) +
+pacf_plot <- ggplot(data.frame(Lag = 1:num_lags_pacf, PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
+  geom_bar(stat = "identity", fill="grey") +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = ub, color = "blue") +
+  geom_hline(yintercept = lb, color = "blue") +
   theme_minimal() +
-  labs(title="Partial Autocorrelation Function (PACF)", x="Lags", y="PACF")
+  labs(title = "Partial Autocorrelation Function (PACF)", x = "Lags", y = "PACF")
 
 
 ## save files ----
@@ -196,4 +205,5 @@ save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
 save(preprocessed_covid_uni, file = "data/preprocessed/preprocessed_covid_uni.rda")
-
+save(acf_plot, file = "visuals/acf_plot.rda")
+save(pacf_plot, file = "visuals/pacf_plot.rda")
