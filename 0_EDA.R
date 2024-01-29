@@ -301,6 +301,31 @@ cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
 plot(time_series_diff, main = "Differenced Time Series")
 
 
+# working through multivariate dataset, ii ----
+
+# removing quasi-constant features
+preprocessed_covid_multi <- preprocessed_covid_multi %>%
+  select_if(~ n_distinct(.) > 0.95)
+
+
+## removing low-correlation with target variable features ----
+
+# extracting numeric data
+numeric_data <- preprocessed_covid_multi %>% select_if(is.numeric)
+
+# listing calculated correlation with target variable
+corr_target <- cor(numeric_data, use = "complete.obs")[, "owid_new_deaths"]
+
+# removing target variable from the list
+corr_target <- corr_target[-which(names(corr_target) == "owid_new_deaths")]
+
+# removing target variables with correlation between -0.1 and 0.1
+low_vars <- names(which(abs(corr_target) < 0.1))
+
+# final preprocessed data
+preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars))
+
+
 
 # saving files ----
 save(preprocessed_covid_multi, file = "data/preprocessed/multivariate/preprocessed_covid_multi.rda")
@@ -320,3 +345,4 @@ save(netherlands, file = "data/preprocessed/univariate/netherlands.rda")
 save(germany, file = "data/preprocessed/univariate/germany.rda")
 save(acf_plot, file = "visuals/acf_plot.rda")
 save(pacf_plot, file = "visuals/pacf_plot.rda")
+
