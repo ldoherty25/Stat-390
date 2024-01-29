@@ -127,9 +127,11 @@ numerical_data <- preprocessed_covid_multi %>% select_if(is.numeric)
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
 
 # establish threshold to reduce dimensions
+# (drop if the absolute value of correlation coefficient is under 0.5)
 correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 
 # adapt to ggplot2
+# (convert wide-format data to long-format data)
 melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
 
 # produce heatmap
@@ -244,15 +246,19 @@ uni_grouped_covid <- preprocessed_covid_multi %>%
   complete(date = seq(min(date), max(date), by = "day"), fill = list(total_new_deaths = 0))
 
 # calculating ACF and PACF
+# (how the values time series are correlated with their own lagged values)
 acf_vals <- acf(uni_grouped_covid$total_new_deaths, plot = FALSE)
+# (controlling for other lags)
 pacf_vals <- pacf(uni_grouped_covid$total_new_deaths, plot = FALSE)
 
-# calculating bounds based on non-NA values
+# calculating standard error
+# (if the ACF >> se -> true pattern in data)
 n <- sum(!is.na(uni_grouped_covid$total_new_deaths))
 se <- 1 / sqrt(n)
 
 # producing the desired plots
 
+# (strong + autocorrelation at all lags / decreasing trend as lags increase)
 acf_plot <- ggplot(data.frame(Lag = 1:(length(acf_vals$acf)-1), ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
   geom_bar(stat = "identity", fill = "grey") +
   geom_hline(yintercept = 0) +
@@ -260,6 +266,7 @@ acf_plot <- ggplot(data.frame(Lag = 1:(length(acf_vals$acf)-1), ACF = acf_vals$a
   theme_minimal() +
   labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
 
+# (no significant partial autocorrelation)
 pacf_plot <- ggplot(data.frame(Lag = 1:(length(pacf_vals$acf)-1), PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
   geom_bar(stat = "identity", fill="grey") +
   geom_hline(yintercept = 0) +
@@ -281,6 +288,7 @@ residuals <- time_series - trend
 par(mfrow = c(3, 1))
 plot(time_series, main = "Observed", xlab = "", ylab = "New Deaths", col = "black", xaxt='n')
 plot(trend, main = "Trend", xlab = "", ylab = "Trend", col = "blue", xaxt='n')
+# (what remains after the trend is removed)
 plot(residuals, main = "Residuals", xlab = "Time", ylab = "Residuals", col = "red")
 par(mfrow = c(1, 1))
 
@@ -288,6 +296,7 @@ par(mfrow = c(1, 1))
 ## checking if the series is stationary ----
 
 # creating differenced time series
+# (difference between it and the value)
 time_series_diff <- diff(time_series, differences = 1)
 
 # using time_series_diff as the differenced time series object
