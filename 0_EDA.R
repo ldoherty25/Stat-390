@@ -370,8 +370,32 @@ plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main 
 lines(rolling_slow_mean, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-## TIME BASED FEATURES ---
+# rolling se
+rolling_fast_sd <- rollapply(time_series_zoo, width = 30, FUN = sd, align = "right", fill = NA)
+rolling_slow_sd <- rollapply(time_series_zoo, width = 90, FUN = sd, align = "right", fill = NA)
 
+#plotting the rolling sd's
+# Plot the original time series data and rolling mean
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Standard Deviation")
+lines(rolling_fast_sd, col = "red", lwd = 2)
+legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Standard Deviation")
+lines(rolling_slow_sd, col = "red", lwd = 2)
+legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+
+## TIME BASED FEATURES ---
+#univariate
+uni_time_eng <- uni_grouped_covid %>%
+  mutate(month = month(date),
+         day = mday(date),
+         weekday = weekdays(date))
+
+#multivariate
+multi_time_eng <- preprocessed_covid_multi %>%
+  mutate(month = month(date),
+         day = mday(date),
+         weekday = weekdays(date))
 
 #covid_multi_rollmean <- preprocessed_covid_multi %>%
   #fast moving average
