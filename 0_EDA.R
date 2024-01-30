@@ -9,6 +9,9 @@ library(reshape2)
 library(lubridate)
 library(forecast)
 library(modelr)
+library(purrr)
+library(zoo)
+library(TTR)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -333,6 +336,63 @@ low_vars <- names(which(abs(corr_target) < 0.1))
 
 # final preprocessed data
 preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars))
+
+## CREATING LAGS
+
+#univariate
+uni_grouped_covid_lag <- uni_grouped_covid %>%
+  mutate(lagged_nd_1 = dplyr::lag(total_new_deaths, n=1),
+         lagged_nd_2 = dplyr::lag(total_new_deaths, n=2),
+         lagged_nd_7 = dplyr::lag(total_new_deaths, n=7))
+
+#multivariate
+preprocessed_covid_multi_lag <- preprocessed_covid_multi %>%
+  mutate(lagged_nd_1 = dplyr::lag(owid_new_deaths, n=1),
+         lagged_nd_2 = dplyr::lag(owid_new_deaths, n=2),
+         lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
+  
+## ROLLING WINDOW STATISTICS
+
+#rolling averages
+#convert the time series data to a zoo object
+# Convert data to a zoo object
+time_series_zoo <- zoo(uni_grouped_covid$total_new_deaths, order.by = uni_grouped_covid$date)
+# Calculate a 30-day rolling mean
+rolling_fast_mean <- rollapply(time_series_zoo, width = 30, FUN = mean, align = "right", fill = NA)
+rolling_slow_mean <- rollapply(time_series_zoo, width = 90, FUN = mean, align = "right", fill = NA)
+#plotting the rolling means
+# Plot the original time series data and rolling mean
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Mean")
+lines(rolling_fast_mean, col = "red", lwd = 2)
+legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Mean")
+lines(rolling_slow_mean, col = "red", lwd = 2)
+legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+
+## TIME BASED FEATURES ---
+
+
+#covid_multi_rollmean <- preprocessed_covid_multi %>%
+  #fast moving average
+ # mutate(
+  #  fast_mean_30 = rollapply(preprocessed_covid_multi, select = owid_new_deaths, width = 30, #a month
+   # align = "right",
+   # FUN = mean,
+    # mean args
+  #  na.rm = TRUE)) %>%
+  #slow moving average
+ # mutate(slow_mean_90 = rollapply(preprocessed_covid_multi, select = owid_new_deaths,width = 90,
+    #                              align = "right",
+     #                             FUN = mean,  na.rm = TRUE))
+
+## SEASONALITY---
+
+#plotting
+#seasonplot(time_series, year.labels = TRUE, year.labs.left = TRUE, main = "Seasonal new death plot", 
+          # xlab = "Year", ylab = "New_death")
+#Error in seasonplot(time_series, year.labels = TRUE, year.labs.left = TRUE,  : 
+#Data are not seasonal
 
 
 
