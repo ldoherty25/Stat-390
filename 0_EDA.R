@@ -370,7 +370,7 @@ plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main 
 lines(rolling_slow_mean, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-# rolling se
+# rolling sd
 rolling_fast_sd <- rollapply(time_series_zoo, width = 30, FUN = sd, align = "right", fill = NA)
 rolling_slow_sd <- rollapply(time_series_zoo, width = 90, FUN = sd, align = "right", fill = NA)
 
@@ -385,11 +385,27 @@ lines(rolling_slow_sd, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
 ## TIME BASED FEATURES ---
+
+#extract_season <- function(date) {
+#  month_val <- month(date)
+ # if (month_val %in% c(3, 4, 5)) {
+ #   return("Spring")
+ # } else if (month_val %in% c(6, 7, 8)) {
+ #   return("Summer")
+ # } else if (month_val %in% c(9, 10, 11)) {
+  #  return("Fall")
+ # } else {
+ #   return("Winter")
+ # }
+#}
+
 #univariate
 uni_time_eng <- uni_grouped_covid %>%
   mutate(month = month(date),
          day = mday(date),
          weekday = weekdays(date))
+
+#uni_season <- sapply(uni_grouped_covid, extract_season(uni_grouped_covid$date))
 
 #multivariate
 multi_time_eng <- preprocessed_covid_multi %>%
@@ -397,18 +413,11 @@ multi_time_eng <- preprocessed_covid_multi %>%
          day = mday(date),
          weekday = weekdays(date))
 
-#covid_multi_rollmean <- preprocessed_covid_multi %>%
-  #fast moving average
- # mutate(
-  #  fast_mean_30 = rollapply(preprocessed_covid_multi, select = owid_new_deaths, width = 30, #a month
-   # align = "right",
-   # FUN = mean,
-    # mean args
-  #  na.rm = TRUE)) %>%
-  #slow moving average
- # mutate(slow_mean_90 = rollapply(preprocessed_covid_multi, select = owid_new_deaths,width = 90,
-    #                              align = "right",
-     #                             FUN = mean,  na.rm = TRUE))
+ggplot(uni_time_eng, mapping = aes(x = weekday)) + 
+  geom_bar()
+
+ggplot(uni_time_eng, mapping = aes(x = month)) +
+  geom_bar()
 
 ## SEASONALITY---
 
