@@ -12,6 +12,13 @@ library(modelr)
 library(purrr)
 library(zoo)
 library(TTR)
+library(randomForest)
+library(caret)
+library(imputeTS)
+library(doMC)
+
+# set up parallel processing 
+registerDoMC(cores = 8)
 
 # handling common conflicts
 tidymodels_prefer()
@@ -190,6 +197,7 @@ uni_countries <- preprocessed_covid_multi %>%
   arrange(desc(completeness), earliest_death, desc(total_deaths)) %>%
   slice_head(n = 10)
 
+
 # creating a dataset for each selected country
 
 china <- preprocessed_covid_multi %>%
@@ -233,11 +241,11 @@ germany <- preprocessed_covid_multi %>%
   select(date, owid_new_deaths)
 
 
-## constructing ACF and PACF visualizations for selected countries (aggregated) ----
+## constructing ACF and PACF visualizations for selected countries ----
 
 # defining a list of selected countries
-selected_countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", 
-                        "Italy", "United States", "Switzerland", 
+selected_countries <- c("China", "Japan", "France", "Iran, Islamic Rep.",
+                        "Italy", "United States", "Switzerland",
                         "United Kingdom", "Netherlands", "Germany")
 
 # creating a grouped dataset summing each day's new deaths
@@ -277,8 +285,48 @@ pacf_plot <- ggplot(data.frame(Lag = 1:(length(pacf_vals$acf)-1), PACF = pacf_va
   theme_minimal() +
   labs(title = "Partial Autocorrelation Function (PACF)", x = "Lags", y = "PACF")
 
+# specifying countries
+countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
 
-## data decomposition ----
+# creating a function to generate ACF and PACF visualizations
+generate_acf_pacf_plots <- function(country_name) {
+  country_data <- preprocessed_covid_multi %>%
+    filter(country == country_name, owid_new_deaths > 0) %>%
+    arrange(date) %>%  # Sort data by date
+    select(date, owid_new_deaths)
+  
+  if (nrow(country_data) < 2) {
+    cat("Insufficient data for", country_name, "\n")
+    return(NULL)
+  }
+  
+  acf_plot <- acf(country_data$owid_new_deaths, main = paste("ACF - ", country_name), ylim = c(-1,1), mar = c(4, 4, 2, 1))
+  pacf_plot <- pacf(country_data$owid_new_deaths, main = paste("PACF - ", country_name), ylim = c(-1,1), mar = c(4, 4, 2, 1))
+  
+  return(list(acf_plot = acf_plot, pacf_plot = pacf_plot, country_name = country_name))
+}
+
+# generating plots for each country
+plots_list <- lapply(countries, generate_acf_pacf_plots)
+
+# determining layout
+par(mfrow = c(5, 4), mar = c(4, 4, 2, 1))
+
+# including country names
+for (i in 1:10) {
+  if (!is.null(plots_list[[i]])) {
+    plot(plots_list[[i]]$acf_plot)
+    title(main = plots_list[[i]]$country_name, line = -1, cex.main = 0.8)
+    plot(plots_list[[i]]$pacf_plot)
+    title(main = plots_list[[i]]$country_name, line = -1, cex.main = 0.8)
+  }
+}
+
+# resetting plot layout
+par(mfrow = c(1, 1))
+
+
+## data decomposition (sufficient since trends very similar) ----
 
 # generating plot components
 time_series <- ts(uni_grouped_covid$total_new_deaths)
@@ -298,19 +346,103 @@ par(mfrow = c(1, 1))
 
 ## checking if the series is stationary ----
 
-# creating differenced time series
-# (difference between it and the value)
-time_series_diff <- diff(time_series, differences = 1)
+# # creating differenced time series
+# # (difference between it and the value)
+# time_series_diff <- diff(time_series, differences = 1)
+# 
+# # using time_series_diff as the differenced time series object
+# adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
+# 
+# # checking the test statistic and p-value ("p-value smaller than printed p-value" above)
+# cat("ADF Test Statistic:", adf_test_result_diff$statistic, "\n")
+# cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
+# 
+# # plotting the differenced series (needs saving)
+# plot(time_series_diff, main = "Differenced Time Series")
 
-# using time_series_diff as the differenced time series object
-adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
+# looping through selected countries
+for (country_name in selected_countries) {
+  
+  # filtering only selected country
+  country_data <- preprocessed_covid_multi %>%
+    filter(country == country_name, !is.na(owid_new_deaths))
 
-# checking the test statistic and p-value ("p-value smaller than printed p-value" above)
-cat("ADF Test Statistic:", adf_test_result_diff$statistic, "\n")
-cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
+  # creating differenced time series
+  time_series_diff <- diff(country_data$owid_new_deaths, differences = 1)
+  
+  # performing ADF test
+  adf_test_result_diff <- tseries::adf.test(time_series_diff, alternative = "stationary")
+  
+  # printing results
+  cat("Country:", country_name, "\n")
+  cat("ADF Test Statistic:", adf_test_result_diff$statistic, "\n")
+  cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
+}
 
-# plotting the differenced series (needs saving)
-plot(time_series_diff, main = "Differenced Time Series")
+
+## creating separate dataset for ARIMA and Prophet models ----
+
+# ARIMA
+
+# creating storage list
+country_datasets <- list()
+
+# determining split ratio
+split_ratio <- 0.8
+
+# creaing datasets for each country
+for (country_name in selected_countries) {
+  # Filter the data for the current country
+  country_data <- preprocessed_covid_multi %>%
+    filter(country == country_name, owid_new_deaths > 0) %>%
+    select(date, owid_new_deaths)
+  
+  # calculating index for splitting data
+  split_index <- floor(nrow(country_data) * split_ratio)
+  
+  # splitting into training and testing sets
+  train_data <- country_data[1:split_index, ]
+  test_data <- country_data[(split_index + 1):nrow(country_data), ]
+  
+  # storing datasets in list
+  country_datasets[[country_name]] <- list(train_data = train_data, test_data = test_data)
+  
+  # writing csv files
+  write.csv(train_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_train.csv")), row.names = FALSE)
+  write.csv(test_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_test.csv")), row.names = FALSE)
+}
+
+
+# Prophet
+
+# selecting appropriate variables
+selected_variables <- c("date", "country", "owid_new_deaths")
+
+# Filter the dataset
+prophet_dataset <- preprocessed_covid_multi %>%
+  filter(country %in% selected_countries) %>%
+  select(all_of(selected_variables))
+
+# loop through countries to create dataset
+for (country_name in selected_countries) {
+  
+  # filter by country
+  country_data <- prophet_dataset %>%
+    filter(country == country_name, owid_new_deaths > 0) %>%
+    select(date, owid_new_deaths)
+  
+  # determining splitting index
+  split_index <- floor(nrow(country_data) * 0.8)
+  
+  # splitting into training and testing
+  train_data <- country_data[1:split_index, ]
+  test_data <- country_data[(split_index + 1):nrow(country_data), ]
+  
+  # writing files
+  write.csv(train_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_train.csv")), row.names = FALSE)
+  write.csv(test_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_test.csv")), row.names = FALSE)
+}
+
 
 
 # working through multivariate dataset, ii ----
@@ -331,11 +463,19 @@ corr_target <- cor(numeric_data, use = "complete.obs")[, "owid_new_deaths"]
 # removing target variable from the list
 corr_target <- corr_target[-which(names(corr_target) == "owid_new_deaths")]
 
-# removing target variables with correlation between -0.1 and 0.1
-low_vars <- names(which(abs(corr_target) < 0.1))
+# removing target variables with correlation between -0.01 and 0.01
+low_vars <- names(which(abs(corr_target) < 0.01))
 
-# final preprocessed data
+# preprocessed data after removing low correlations
 preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars))
+
+
+## imputing ----
+
+# imputing with linear interpolation
+preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
+
+
 
 ## CREATING LAGS
 
@@ -346,7 +486,7 @@ uni_grouped_covid_lag <- uni_grouped_covid %>%
          lagged_nd_7 = dplyr::lag(total_new_deaths, n=7))
 
 #multivariate
-preprocessed_covid_multi_lag <- preprocessed_covid_multi %>%
+preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
   mutate(lagged_nd_1 = dplyr::lag(owid_new_deaths, n=1),
          lagged_nd_2 = dplyr::lag(owid_new_deaths, n=2),
          lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
@@ -362,11 +502,11 @@ rolling_fast_mean <- rollapply(time_series_zoo, width = 30, FUN = mean, align = 
 rolling_slow_mean <- rollapply(time_series_zoo, width = 90, FUN = mean, align = "right", fill = NA)
 #plotting the rolling means
 # Plot the original time series data and rolling mean
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Mean")
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 30 Days")
 lines(rolling_fast_mean, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Mean")
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 90 Days")
 lines(rolling_slow_mean, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
@@ -376,11 +516,11 @@ rolling_slow_sd <- rollapply(time_series_zoo, width = 90, FUN = sd, align = "rig
 
 #plotting the rolling sd's
 # Plot the original time series data and rolling mean
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Standard Deviation")
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 30 Days")
 lines(rolling_fast_sd, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Covid With Rolling Standard Deviation")
+plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 90 Days")
 lines(rolling_slow_sd, col = "red", lwd = 2)
 legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
@@ -408,7 +548,7 @@ uni_time_eng <- uni_grouped_covid %>%
 #uni_season <- sapply(uni_grouped_covid, extract_season(uni_grouped_covid$date))
 
 #multivariate
-multi_time_eng <- preprocessed_covid_multi %>%
+multi_time_eng <- preprocessed_covid_multi_imputed %>%
   mutate(month = month(date),
          day = mday(date),
          weekday = weekdays(date))
@@ -428,23 +568,78 @@ ggplot(uni_time_eng, mapping = aes(x = month)) +
 #Data are not seasonal
 
 
+## custom features ----
+
+preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
+  mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(average_confirmed, 7, fill = NA, align = 'right')) %>% 
+  mutate(vulnerability_index = (owid_aged_65_older + owid_aged_70_older + owid_diabetes_prevalence + owid_cardiovasc_death_rate) / 4) %>% 
+  mutate(policy_stringency_index = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c3_cancel_public_events + ox_c4_restrictions_on_gatherings + ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement + ox_c8_international_travel_controls) / 7,
+         policy_population_index = policy_stringency_index * owid_population_density) %>% 
+  mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
+
+
+## feature selection ----
+
+# training an rf model
+rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
+
+# computing importance scores
+importance_scores <- importance(rf_model)
+
+# converting to data frame
+importance_df <- as.data.frame(importance_scores)
+
+# make sure there are no duplicate names
+names(importance_df) <- make.unique(names(importance_df))
+
+# incorporating variable name column
+importance_df$Variable <- rownames(importance_df)
+
+# melting to long format
+importance_long <- melt(importance_df, id.vars = "Variable")
+
+# producing plot
+importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +  # Flip the axes to make the plot horizontal
+  theme_minimal() +
+  labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# final dimensions ----
+
+# ARIMA (2128)
+observations_table <- data.frame(
+  Country = c("China", "Japan", "France", "Iran", "Italy", "US", "Switzerland", "UK", "Netherlands", "Germany"),
+  Observations = c(nrow(china), nrow(japan), nrow(france), nrow(iran), nrow(italy), nrow(us), nrow(switzerland), nrow(uk), nrow(netherlands), nrow(germany))
+) %>% 
+  DT::datatable()
+
+# Prophet (3050)
+dim(prophet_dataset)
+
+# multivariate (64675 x 57)
+dim(preprocessed_covid_multi_imputed)
+
+
 
 # saving files ----
-save(preprocessed_covid_multi, file = "data/preprocessed/multivariate/preprocessed_covid_multi.rda")
+save(preprocessed_covid_multi_imputed, file = "data/preprocessed/multivariate/preprocessed_covid_multi_imputed")
 save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
 save(correlation_graph, file = "visuals/correlation_graph.rda")
 save(missing_graph, file = "visuals/missing_graph.rda")
 save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
-save(china, file = "data/preprocessed/univariate/china.rda")
-save(japan, file = "data/preprocessed/univariate/japan.rda")
-save(france, file = "data/preprocessed/univariate/france.rda")
-save(iran, file = "data/preprocessed/univariate/iran.rda")
-save(italy, file = "data/preprocessed/univariate/italy.rda")
-save(us, file = "data/preprocessed/univariate/us.rda")
-save(switzerland, file = "data/preprocessed/univariate/switzerland.rda")
-save(uk, file = "data/preprocessed/univariate/uk.rda")
-save(netherlands, file = "data/preprocessed/univariate/netherlands.rda")
-save(germany, file = "data/preprocessed/univariate/germany.rda")
+save(china, file = "data/preprocessed/univariate/arima/china.rda")
+save(japan, file = "data/preprocessed/univariate/arima/japan.rda")
+save(france, file = "data/preprocessed/univariate/arima/france.rda")
+save(iran, file = "data/preprocessed/univariate/arima/iran.rda")
+save(italy, file = "data/preprocessed/univariate/arima/italy.rda")
+save(us, file = "data/preprocessed/univariate/arima/us.rda")
+save(switzerland, file = "data/preprocessed/univariate/arima/switzerland.rda")
+save(uk, file = "data/preprocessed/univariate/arima/uk.rda")
+save(netherlands, file = "data/preprocessed/univariate/arima/netherlands.rda")
+save(germany, file = "data/preprocessed/univariate/arima/germany.rda")
 save(acf_plot, file = "visuals/acf_plot.rda")
 save(pacf_plot, file = "visuals/pacf_plot.rda")
-
+save(importance, file = "visuals/importance.rda")
