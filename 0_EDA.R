@@ -68,9 +68,9 @@ columns_to_remove <- prop_non_missing %>%
 covid_cleaned <- mutated_covid %>% 
   select(-all_of(columns_to_remove))
 
-# selecting only non-redundant variables
+# selecting only non-redundant variables; new: removed average_cummulative_deaths
 preprocessed_covid_multi <- covid_cleaned %>%
-  select(country, date, average_confirmed, average_cummulative_deaths,
+  select(country, date, average_confirmed, # average_cummulative_deaths,
          owid_new_cases, owid_new_deaths, average_stringency_index,
          owid_population, owid_population_density, owid_median_age,
          owid_aged_65_older, owid_aged_70_older, owid_gdp_per_capita, owid_cardiovasc_death_rate,
@@ -128,7 +128,7 @@ missing_graph <- preprocessed_covid_multi %>%
   labs(title = "Missing Data")
 
 
-## correlation matrix ----
+## (preliminary) correlation matrix ----
 
 # filter out numerical data
 numerical_data <- preprocessed_covid_multi %>% select_if(is.numeric)
@@ -241,49 +241,49 @@ germany <- preprocessed_covid_multi %>%
   select(date, owid_new_deaths)
 
 
-## constructing ACF and PACF visualizations for selected countries ----
-
-# defining a list of selected countries
-selected_countries <- c("China", "Japan", "France", "Iran, Islamic Rep.",
-                        "Italy", "United States", "Switzerland",
-                        "United Kingdom", "Netherlands", "Germany")
-
-# creating a grouped dataset summing each day's new deaths
-uni_grouped_covid <- preprocessed_covid_multi %>%
-  filter(country %in% selected_countries) %>%
-  group_by(date) %>%
-  summarize(total_new_deaths = sum(owid_new_deaths, na.rm = TRUE)) %>%
-  ungroup() %>%
-  complete(date = seq(min(date), max(date), by = "day"), fill = list(total_new_deaths = 0))
-
-# calculating ACF and PACF
-# (how the values time series are correlated with their own lagged values)
-acf_vals <- acf(uni_grouped_covid$total_new_deaths, plot = FALSE)
-# (controlling for other lags)
-pacf_vals <- pacf(uni_grouped_covid$total_new_deaths, plot = FALSE)
-
-# calculating standard error
-# (if the ACF >> se -> true pattern in data)
-n <- sum(!is.na(uni_grouped_covid$total_new_deaths))
-se <- 1 / sqrt(n)
-
-# producing the desired plots
-
-# (strong + autocorrelation at all lags / decreasing trend as lags increase)
-acf_plot <- ggplot(data.frame(Lag = 1:(length(acf_vals$acf)-1), ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
-  geom_bar(stat = "identity", fill = "grey") +
-  geom_hline(yintercept = 0) +
-  geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
-  theme_minimal() +
-  labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
-
-# (no significant partial autocorrelation)
-pacf_plot <- ggplot(data.frame(Lag = 1:(length(pacf_vals$acf)-1), PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
-  geom_bar(stat = "identity", fill="grey") +
-  geom_hline(yintercept = 0) +
-  geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
-  theme_minimal() +
-  labs(title = "Partial Autocorrelation Function (PACF)", x = "Lags", y = "PACF")
+## constructing ACF and PACF visualizations for each country ----
+# 
+# # defining a list of selected countries
+# selected_countries <- c("China", "Japan", "France", "Iran, Islamic Rep.",
+#                         "Italy", "United States", "Switzerland",
+#                         "United Kingdom", "Netherlands", "Germany")
+# 
+# # creating a grouped dataset summing each day's new deaths
+# uni_grouped_covid <- preprocessed_covid_multi %>%
+#   filter(country %in% selected_countries) %>%
+#   group_by(date) %>%
+#   summarize(total_new_deaths = sum(owid_new_deaths, na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   complete(date = seq(min(date), max(date), by = "day"), fill = list(total_new_deaths = 0))
+# 
+# # calculating ACF and PACF
+# # (how the values time series are correlated with their own lagged values)
+# acf_vals <- acf(uni_grouped_covid$total_new_deaths, plot = FALSE)
+# # (controlling for other lags)
+# pacf_vals <- pacf(uni_grouped_covid$total_new_deaths, plot = FALSE)
+# 
+# # calculating standard error
+# # (if the ACF >> se -> true pattern in data)
+# n <- sum(!is.na(uni_grouped_covid$total_new_deaths))
+# se <- 1 / sqrt(n)
+# 
+# # producing the desired plots
+# 
+# # (strong + autocorrelation at all lags / decreasing trend as lags increase)
+# acf_plot <- ggplot(data.frame(Lag = 1:(length(acf_vals$acf)-1), ACF = acf_vals$acf[-1]), aes(x = Lag, y = ACF)) +
+#   geom_bar(stat = "identity", fill = "grey") +
+#   geom_hline(yintercept = 0) +
+#   geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
+#   theme_minimal() +
+#   labs(title = "Autocorrelation Function (ACF)", x = "Lags", y = "ACF")
+# 
+# # (no significant partial autocorrelation)
+# pacf_plot <- ggplot(data.frame(Lag = 1:(length(pacf_vals$acf)-1), PACF = pacf_vals$acf[-1]), aes(x = Lag, y = PACF)) +
+#   geom_bar(stat = "identity", fill="grey") +
+#   geom_hline(yintercept = 0) +
+#   geom_hline(yintercept = c(1.96, -1.96) * se, color = "blue") +
+#   theme_minimal() +
+#   labs(title = "Partial Autocorrelation Function (PACF)", x = "Lags", y = "PACF")
 
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
@@ -328,20 +328,20 @@ par(mfrow = c(1, 1))
 
 ## data decomposition (sufficient since trends very similar) ----
 
-# generating plot components
-time_series <- ts(uni_grouped_covid$total_new_deaths)
-trend <- ma(time_series, order = 14)
-
-# calculating residuals
-residuals <- time_series - trend
-
-# joining plot components (needs saving)
-par(mfrow = c(3, 1))
-plot(time_series, main = "Observed", xlab = "", ylab = "New Deaths", col = "black", xaxt='n')
-plot(trend, main = "Trend", xlab = "", ylab = "Trend", col = "blue", xaxt='n')
-# (what remains after the trend is removed)
-plot(residuals, main = "Residuals", xlab = "Time", ylab = "Residuals", col = "red")
-par(mfrow = c(1, 1))
+# # generating plot components
+# time_series <- ts(uni_grouped_covid$total_new_deaths)
+# trend <- ma(time_series, order = 14)
+# 
+# # calculating residuals
+# residuals <- time_series - trend
+# 
+# # joining plot components (needs saving)
+# par(mfrow = c(3, 1))
+# plot(time_series, main = "Observed", xlab = "", ylab = "New Deaths", col = "black", xaxt='n')
+# plot(trend, main = "Trend", xlab = "", ylab = "Trend", col = "blue", xaxt='n')
+# # (what remains after the trend is removed)
+# plot(residuals, main = "Residuals", xlab = "Time", ylab = "Residuals", col = "red")
+# par(mfrow = c(1, 1))
 
 
 ## checking if the series is stationary ----
@@ -361,7 +361,7 @@ par(mfrow = c(1, 1))
 # plot(time_series_diff, main = "Differenced Time Series")
 
 # looping through selected countries
-for (country_name in selected_countries) {
+for (country_name in countries) {
   
   # filtering only selected country
   country_data <- preprocessed_covid_multi %>%
@@ -380,9 +380,7 @@ for (country_name in selected_countries) {
 }
 
 
-## creating separate dataset for ARIMA and Prophet models ----
-
-# ARIMA
+## creating separate dataset for ARIMA and Univariate Prophet models ----
 
 # creating storage list
 country_datasets <- list()
@@ -391,7 +389,7 @@ country_datasets <- list()
 split_ratio <- 0.8
 
 # creaing datasets for each country
-for (country_name in selected_countries) {
+for (country_name in countries) {
   # Filter the data for the current country
   country_data <- preprocessed_covid_multi %>%
     filter(country == country_name, owid_new_deaths > 0) %>%
@@ -413,35 +411,35 @@ for (country_name in selected_countries) {
 }
 
 
-# Prophet
-
-# selecting appropriate variables
-selected_variables <- c("date", "country", "owid_new_deaths")
-
-# Filter the dataset
-prophet_dataset <- preprocessed_covid_multi %>%
-  filter(country %in% selected_countries) %>%
-  select(all_of(selected_variables))
-
-# loop through countries to create dataset
-for (country_name in selected_countries) {
-  
-  # filter by country
-  country_data <- prophet_dataset %>%
-    filter(country == country_name, owid_new_deaths > 0) %>%
-    select(date, owid_new_deaths)
-  
-  # determining splitting index
-  split_index <- floor(nrow(country_data) * 0.8)
-  
-  # splitting into training and testing
-  train_data <- country_data[1:split_index, ]
-  test_data <- country_data[(split_index + 1):nrow(country_data), ]
-  
-  # writing files
-  write.csv(train_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_train.csv")), row.names = FALSE)
-  write.csv(test_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_test.csv")), row.names = FALSE)
-}
+# # Prophet
+# 
+# # selecting appropriate variables
+# selected_variables <- c("date", "country", "owid_new_deaths")
+# 
+# # Filter the dataset
+# prophet_dataset <- preprocessed_covid_multi %>%
+#   filter(country %in% selected_countries) %>%
+#   select(all_of(selected_variables))
+# 
+# # loop through countries to create dataset
+# for (country_name in selected_countries) {
+#   
+#   # filter by country
+#   country_data <- prophet_dataset %>%
+#     filter(country == country_name, owid_new_deaths > 0) %>%
+#     select(date, owid_new_deaths)
+#   
+#   # determining splitting index
+#   split_index <- floor(nrow(country_data) * 0.8)
+#   
+#   # splitting into training and testing
+#   train_data <- country_data[1:split_index, ]
+#   test_data <- country_data[(split_index + 1):nrow(country_data), ]
+#   
+#   # writing files
+#   write.csv(train_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_train.csv")), row.names = FALSE)
+#   write.csv(test_data, file.path("data/preprocessed/univariate/prophet/", paste0(country_name, "_test.csv")), row.names = FALSE)
+# }
 
 
 
@@ -463,8 +461,8 @@ corr_target <- cor(numeric_data, use = "complete.obs")[, "owid_new_deaths"]
 # removing target variable from the list
 corr_target <- corr_target[-which(names(corr_target) == "owid_new_deaths")]
 
-# removing target variables with correlation between -0.01 and 0.01
-low_vars <- names(which(abs(corr_target) < 0.01))
+# removing target variables with correlation between -0.1 and 0.1
+low_vars <- names(which(abs(corr_target) < 0.1))
 
 # preprocessed data after removing low correlations
 preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars))
@@ -474,6 +472,12 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars
 
 # imputing with linear interpolation
 preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
+
+
+
+
+# CHECKED ISSUE WITH AGGREGATING DATA UNTIL HERE ----
+
 
 
 
