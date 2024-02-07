@@ -200,45 +200,166 @@ uni_countries <- preprocessed_covid_multi %>%
 
 # creating a dataset for each selected country
 
-china <- preprocessed_covid_multi %>%
-  filter(country == "China", owid_new_deaths > 0) %>% 
+china_check <- preprocessed_covid_multi %>%
+  filter(country == "China") %>% 
   select(date, owid_new_deaths)
+china_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", 
+                      "2020-01-05", "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", 
+                      "2020-01-10")
+china <- china_check %>%
+  filter(!(date %in% china_first_zero_dates))
 
-japan <- preprocessed_covid_multi %>%
-  filter(country == "Japan", owid_new_deaths > 0) %>% 
+japan_check <- preprocessed_covid_multi %>%
+  filter(country == "Japan") %>% 
   select(date, owid_new_deaths)
+japan_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", 
+                            "2020-01-05", "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", 
+                            "2020-01-10", "2020-01-11", "2020-01-12", "2020-01-13", "2020-01-14",
+                            "2020-01-15", "2020-01-16", "2020-01-17", "2020-01-18", "2020-01-19", 
+                            "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23", "2020-01-24", 
+                            "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29", 
+                            "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", 
+                            "2020-02-04", "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08",
+                            "2020-02-09", "2020-02-10", "2020-02-11", "2020-02-12")
 
-france <- preprocessed_covid_multi %>%
-  filter(country == "France", owid_new_deaths > 0) %>% 
-  select(date, owid_new_deaths)
+japan <- japan_check %>%
+  filter(!(date %in% japan_first_zero_dates))
 
-iran <- preprocessed_covid_multi %>%
-  filter(country == "Iran, Islamic Rep.", owid_new_deaths > 0) %>% 
+france_check <- preprocessed_covid_multi %>%
+  filter(country == "France") %>% 
   select(date, owid_new_deaths)
+france_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", 
+                             "2020-01-05", "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10",
+                             "2020-01-11", "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16",
+                             "2020-01-17", "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22",
+                             "2020-01-23", "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28",
+                             "2020-01-29", "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03",
+                             "2020-02-04", "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09",
+                             "2020-02-10", "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14")
 
-italy <- preprocessed_covid_multi %>%
-  filter(country == "Italy", owid_new_deaths > 0) %>% 
-  select(date, owid_new_deaths)
+france <- france_check %>%
+  filter(!(date %in% france_first_zero_dates))
 
-us <- preprocessed_covid_multi %>%
-  filter(country == "United States", owid_new_deaths > 0) %>% 
+iran_check <- preprocessed_covid_multi %>%
+  filter(country == "Iran, Islamic Rep.") %>% 
   select(date, owid_new_deaths)
+iran_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                           "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11", 
+                           "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17", 
+                           "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23",
+                           "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                           "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                           "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10", 
+                           "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16", 
+                           "2020-02-17", "2020-02-18", "2020-02-19")
+iran <- iran_check %>%
+  filter(!(date %in% iran_first_zero_dates))
 
-switzerland <- preprocessed_covid_multi %>%
-  filter(country == "Switzerland", owid_new_deaths > 0) %>% 
+italy_check <- preprocessed_covid_multi %>%
+  filter(country == "Italy") %>% 
   select(date, owid_new_deaths)
+italy_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                            "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11",
+                            "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17",
+                            "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23",
+                            "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                            "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                            "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10",
+                            "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16",
+                            "2020-02-17", "2020-02-18", "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22")
+italy <- italy_check %>%
+  filter(!(date %in% italy_first_zero_dates))
 
-uk <- preprocessed_covid_multi %>%
-  filter(country == "United Kingdom", owid_new_deaths > 0) %>% 
+us_check <- preprocessed_covid_multi %>%
+  filter(country == "United States") %>% 
   select(date, owid_new_deaths)
+us_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                         "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11",
+                         "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17",
+                         "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23",
+                         "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                         "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                         "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10",
+                         "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16",
+                         "2020-02-17", "2020-02-18", "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22",
+                         "2020-02-23", "2020-02-24", "2020-02-25", "2020-02-26", "2020-02-27", "2020-02-28",
+                         "2020-02-29")
+us <- us_check %>%
+  filter(!(date %in% us_first_zero_dates))
 
-netherlands <- preprocessed_covid_multi %>%
-  filter(country == "Netherlands", owid_new_deaths > 0) %>% 
+switzerland_check <- preprocessed_covid_multi %>%
+  filter(country == "Switzerland") %>% 
   select(date, owid_new_deaths)
+swiss_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                            "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11",
+                            "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17",
+                            "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23",
+                            "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                            "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                            "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10",
+                            "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16",
+                            "2020-02-17", "2020-02-18", "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22",
+                            "2020-02-23", "2020-02-24", "2020-02-25", "2020-02-26", "2020-02-27", "2020-02-28",
+                            "2020-02-29", "2020-03-01", "2020-03-02", "2020-03-03", "2020-03-04", "2020-03-05")
+switzerland <- switzerland_check %>%
+  filter(!(date %in% swiss_first_zero_dates))
+  
 
-germany <- preprocessed_covid_multi %>%
-  filter(country == "Germany", owid_new_deaths > 0) %>% 
+uk_check <- preprocessed_covid_multi %>%
+  filter(country == "United Kingdom") %>% 
   select(date, owid_new_deaths)
+uk_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                         "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11",
+                         "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17",
+                         "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23", 
+                         "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29", 
+                         "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                         "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10",
+                         "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16",
+                         "2020-02-17", "2020-02-18", "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22",
+                         "2020-02-23", "2020-02-24", "2020-02-25", "2020-02-26", "2020-02-27", "2020-02-28",
+                         "2020-02-29", "2020-03-01", "2020-03-02", "2020-03-03", "2020-03-04", "2020-03-05", 
+                         "2020-03-06")
+uk <- uk_check %>%
+  filter(!(date %in% uk_first_zero_dates))
+
+netherlands_check <- preprocessed_covid_multi %>%
+  filter(country == "Netherlands") %>% 
+  select(date, owid_new_deaths)
+netherlands_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", 
+                                  "2020-01-05", "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09",
+                                  "2020-01-10", "2020-01-11", "2020-01-12", "2020-01-13", "2020-01-14",
+                                  "2020-01-15", "2020-01-16", "2020-01-17", "2020-01-18", "2020-01-19",
+                                  "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23", "2020-01-24",
+                                  "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                                  "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03",
+                                  "2020-02-04", "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08",
+                                  "2020-02-09", "2020-02-10", "2020-02-11", "2020-02-12", "2020-02-13",
+                                  "2020-02-14", "2020-02-15", "2020-02-16", "2020-02-17", "2020-02-18",
+                                  "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22", "2020-02-23",
+                                  "2020-02-24", "2020-02-25", "2020-02-26", "2020-02-27", "2020-02-28",
+                                  "2020-02-29", "2020-03-01", "2020-03-02", "2020-03-03", "2020-03-04",
+                                  "2020-03-05", "2020-03-06")
+netherlands <- netherlands_check %>%
+  filter(!(date %in% netherlands_first_zero_dates))
+
+germany_check <- preprocessed_covid_multi %>%
+  filter(country == "Germany") %>% 
+  select(date, owid_new_deaths)
+germany_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04", "2020-01-05",
+                              "2020-01-06", "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10", "2020-01-11",
+                              "2020-01-12", "2020-01-13", "2020-01-14", "2020-01-15", "2020-01-16", "2020-01-17",
+                              "2020-01-18", "2020-01-19", "2020-01-20", "2020-01-21", "2020-01-22", "2020-01-23",
+                              "2020-01-24", "2020-01-25", "2020-01-26", "2020-01-27", "2020-01-28", "2020-01-29",
+                              "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", "2020-02-04",
+                              "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09", "2020-02-10", 
+                              "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14", "2020-02-15", "2020-02-16",
+                              "2020-02-17", "2020-02-18", "2020-02-19", "2020-02-20", "2020-02-21", "2020-02-22",
+                              "2020-02-23", "2020-02-24", "2020-02-25", "2020-02-26", "2020-02-27", "2020-02-28", 
+                              "2020-02-29", "2020-03-01", "2020-03-02", "2020-03-03", "2020-03-04", "2020-03-05",
+                              "2020-03-06", "2020-03-07", "2020-03-08", "2020-03-09")
+germany <- germany_check %>%
+  filter(!(date %in% germany_first_zero_dates))
 
 
 ## constructing ACF and PACF visualizations for each country ----
@@ -484,10 +605,10 @@ preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
 ## CREATING LAGS
 
 #univariate
-uni_grouped_covid_lag <- uni_grouped_covid %>%
-  mutate(lagged_nd_1 = dplyr::lag(total_new_deaths, n=1),
-         lagged_nd_2 = dplyr::lag(total_new_deaths, n=2),
-         lagged_nd_7 = dplyr::lag(total_new_deaths, n=7))
+#uni_grouped_covid_lag <- uni_grouped_covid %>%
+#  mutate(lagged_nd_1 = dplyr::lag(total_new_deaths, n=1),
+#         lagged_nd_2 = dplyr::lag(total_new_deaths, n=2),
+ #        lagged_nd_7 = dplyr::lag(total_new_deaths, n=7))
 
 #multivariate
 preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
@@ -500,33 +621,33 @@ preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
 #rolling averages
 #convert the time series data to a zoo object
 # Convert data to a zoo object
-time_series_zoo <- zoo(uni_grouped_covid$total_new_deaths, order.by = uni_grouped_covid$date)
+#time_series_zoo <- zoo(uni_grouped_covid$total_new_deaths, order.by = uni_grouped_covid$date)
 # Calculate a 30-day rolling mean
-rolling_fast_mean <- rollapply(time_series_zoo, width = 30, FUN = mean, align = "right", fill = NA)
-rolling_slow_mean <- rollapply(time_series_zoo, width = 90, FUN = mean, align = "right", fill = NA)
+#rolling_fast_mean <- rollapply(time_series_zoo, width = 30, FUN = mean, align = "right", fill = NA)
+#rolling_slow_mean <- rollapply(time_series_zoo, width = 90, FUN = mean, align = "right", fill = NA)
 #plotting the rolling means
 # Plot the original time series data and rolling mean
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 30 Days")
-lines(rolling_fast_mean, col = "red", lwd = 2)
-legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+#plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 30 Days")
+#lines(rolling_fast_mean, col = "red", lwd = 2)
+#legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 90 Days")
-lines(rolling_slow_mean, col = "red", lwd = 2)
-legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+#plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Mean 90 Days")
+#lines(rolling_slow_mean, col = "red", lwd = 2)
+#legend("topright", legend = c("Original Data", "Rolling Mean"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
 # rolling sd
-rolling_fast_sd <- rollapply(time_series_zoo, width = 30, FUN = sd, align = "right", fill = NA)
-rolling_slow_sd <- rollapply(time_series_zoo, width = 90, FUN = sd, align = "right", fill = NA)
+#rolling_fast_sd <- rollapply(time_series_zoo, width = 30, FUN = sd, align = "right", fill = NA)
+#rolling_slow_sd <- rollapply(time_series_zoo, width = 90, FUN = sd, align = "right", fill = NA)
 
 #plotting the rolling sd's
 # Plot the original time series data and rolling mean
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 30 Days")
-lines(rolling_fast_sd, col = "red", lwd = 2)
-legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+#plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 30 Days")
+#lines(rolling_fast_sd, col = "red", lwd = 2)
+#legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
-plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 90 Days")
-lines(rolling_slow_sd, col = "red", lwd = 2)
-legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
+#plot(time_series_zoo, type = "l", col = "blue", ylab = "Total new deaths", main = "Rolling Standard Deviation 90 Days")
+#lines(rolling_slow_sd, col = "red", lwd = 2)
+#legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "red"), lty = 1:1, cex = 0.8)
 
 ## TIME BASED FEATURES ---
 
@@ -544,10 +665,10 @@ legend("topright", legend = c("Original Data", "Rolling SD"), col = c("blue", "r
 #}
 
 #univariate
-uni_time_eng <- uni_grouped_covid %>%
-  mutate(month = month(date),
-         day = mday(date),
-         weekday = weekdays(date))
+#uni_time_eng <- uni_grouped_covid %>%
+#  mutate(month = month(date),
+#         day = mday(date),
+#         weekday = weekdays(date))
 
 #uni_season <- sapply(uni_grouped_covid, extract_season(uni_grouped_covid$date))
 
@@ -557,11 +678,11 @@ multi_time_eng <- preprocessed_covid_multi_imputed %>%
          day = mday(date),
          weekday = weekdays(date))
 
-ggplot(uni_time_eng, mapping = aes(x = weekday)) + 
-  geom_bar()
+#ggplot(uni_time_eng, mapping = aes(x = weekday)) + 
+#  geom_bar()
 
-ggplot(uni_time_eng, mapping = aes(x = month)) +
-  geom_bar()
+#ggplot(uni_time_eng, mapping = aes(x = month)) +
+#  geom_bar()
 
 ## SEASONALITY---
 
@@ -581,6 +702,7 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
          policy_population_index = policy_stringency_index * owid_population_density) %>% 
   mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
 
+### COMMENTED OUT UNI_GROUPED
 
 ## feature selection ----
 
