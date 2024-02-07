@@ -743,7 +743,7 @@ observations_table <- data.frame(
   DT::datatable()
 
 # Prophet (3050)
-dim(prophet_dataset)
+#dim(prophet_dataset)
 
 # multivariate (64675 x 57)
 dim(preprocessed_covid_multi_imputed)
