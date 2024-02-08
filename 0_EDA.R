@@ -500,6 +500,10 @@ preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
          lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
   
 #multivariate
+holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
+                      "2020-07-31", "2020-11-14", "2020-02-14", "2020-05-05", "2020-12-10", "2020-12-18",
+                      "2020-10-31", "2020-12-21", "2020-11-01", "2020-11-02", "2020-11-26", "2020-03-19"))
+  
 multi_time_eng <- preprocessed_covid_multi_imputed %>%
   mutate(month = month(date),
          day = mday(date),
@@ -508,8 +512,41 @@ multi_time_eng <- preprocessed_covid_multi_imputed %>%
            month %in% c(3, 4, 5) ~ "Spring",
            month %in% c(6, 7, 8) ~ "Summer",
            month %in% c(9, 10, 11) ~ "Fall",
-           TRUE ~ "Winter"))
+           TRUE ~ "Winter"),
+         IsHoliday = date %in% holidays)
 
+#plotting season and new_deaths
+ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
+  geom_boxplot()
+ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
+  geom_violin()
+ggplot(multi_time_eng, mapping = aes(x = season))+
+  geom_bar() +
+  labs(title = "Seasonal Count Plot")
+ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
+  geom_histogram()+
+  facet_wrap(~season)
+
+#plotting weekday and new_deaths
+ggplot(multi_time_eng, mapping = aes(x = weekday, y = owid_new_deaths))+
+  geom_boxplot()
+ggplot(multi_time_eng, mapping = aes(x = weekday, y = owid_new_deaths))+
+  geom_violin()
+ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
+  geom_histogram()+
+  facet_wrap(~weekday)
+
+#plotting IsHoliday with new deaths
+ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
+  geom_boxplot()
+ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
+  geom_violin()
+ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
+  geom_histogram()+
+  facet_wrap(~IsHoliday)
+ggplot(multi_time_eng, mapping = aes(x = IsHoliday))+
+  geom_bar() +
+  labs(title = "Holiday Count Plot")
 
 ## custom features ----
 
