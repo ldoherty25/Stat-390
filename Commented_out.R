@@ -195,3 +195,34 @@
 
 # Prophet (3050)
 #dim(prophet_dataset)
+
+# Install and load necessary packages
+install.packages("tidyverse")
+library(tidyverse)
+
+# Sample data frame with a column representing months
+df <- data.frame(Month = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))
+
+# Function to perform cyclical encoding and create separate columns
+cyclical_encode <- function(x, period) {
+  sin_val <- sin(2 * pi * x / period)
+  cos_val <- cos(2 * pi * x / period)
+  return(data.frame(sin_val = sin_val, cos_val = cos_val))
+}
+
+cyclical_encode_sin <- function(x, time_period) {
+  sin_val <- sin(2 * pi * x / time_period)
+  return(data.frame(sin_val = sin_val))
+}
+
+# Apply cyclical encoding and create separate columns
+df <- df %>%
+  rowwise() %>%
+  mutate(cyclical_encoding = list(cyclical_encode_sin(as.integer(factor(Month, levels = month.name)), time_period = 12))) #%>%
+  #bind_cols(., unnest(cols = df$cyclical_encoding))
+
+# Remove the temporary column
+df <- df %>% select(-cyclical_encoding)
+
+# Print the result
+print(df)

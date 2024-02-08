@@ -503,17 +503,41 @@ preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
 holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
                       "2020-07-31", "2020-11-14", "2020-02-14", "2020-05-05", "2020-12-10", "2020-12-18",
                       "2020-10-31", "2020-12-21", "2020-11-01", "2020-11-02", "2020-11-26", "2020-03-19"))
+##Cyclical encoding
+#Months_df <- data.frame(Month = c("January", "February", "March", "April", "May", "June", "July", 
+#                                  "August", "September", "October", "November", "December"))
+# Function to perform cyclical encoding
+cyclical_encode_sin <- function(x, time_period) {
+  sin_val <- sin(2 * pi * x / time_period)
+  return(sin_val)
+}
   
 multi_time_eng <- preprocessed_covid_multi_imputed %>%
-  mutate(month = month(date),
+  mutate(Month = month(date),
          day = mday(date),
          weekday = weekdays(date, abbreviate = FALSE),
          season = case_when(
-           month %in% c(3, 4, 5) ~ "Spring",
-           month %in% c(6, 7, 8) ~ "Summer",
-           month %in% c(9, 10, 11) ~ "Fall",
+           Month %in% c(3, 4, 5) ~ "Spring",
+           Month %in% c(6, 7, 8) ~ "Summer",
+           Month %in% c(9, 10, 11) ~ "Fall",
            TRUE ~ "Winter"),
          IsHoliday = date %in% holidays)
+
+multi_time_eng_cyclic <- multi_time_eng %>%
+  mutate(cyclical_month_sin = sin(2 * pi * Month / 12),
+         cyclical_month_cos = cos(2 * pi * Month / 12),
+         cyclical_weekday_sin = sin(2 * pi * Month / 7),
+         cyclical_weekday_cos = cos(2 * pi * Month / 7),
+         cyclical_dayofmth_sin = sin(2 * pi * Month / 31),
+         cyclical_dayofmth_cos = cos(2 * pi * Month / 31))
+           
+          #list(cyclical_encode_sin(as.integer(factor(multi_time_eng$Month, levels = month.name)), 
+                                           #    time_period = 12))) #%>%
+ # bind_cols(., unnest(cols = multi_time_eng$cyclical_month)) #%>%
+ # rename(cyclical_month_sin = )
+ # mutate(cyclical_weekday = list(cyclical_encode(as.integer(factor(weekday, levels = weekday.name)),
+                                                 #time_period = 7))) %>%
+  #bind_cols(., unnest(multi_time_eng$cyclical_weekday))
 
 #plotting season and new_deaths
 ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
