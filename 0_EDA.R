@@ -503,7 +503,12 @@ preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
 multi_time_eng <- preprocessed_covid_multi_imputed %>%
   mutate(month = month(date),
          day = mday(date),
-         weekday = weekdays(date))
+         weekday = weekdays(date, abbreviate = FALSE),
+         season = case_when(
+           month %in% c(3, 4, 5) ~ "Spring",
+           month %in% c(6, 7, 8) ~ "Summer",
+           month %in% c(9, 10, 11) ~ "Fall",
+           TRUE ~ "Winter"))
 
 
 ## custom features ----
@@ -515,7 +520,7 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
          policy_population_index = policy_stringency_index * owid_population_density) %>% 
   mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
 
-### COMMENTED OUT UNI_GROUPED
+### COMMENTED OUT UNI_GROUPED UNTIL HERE
 
 ## feature selection ----
 
