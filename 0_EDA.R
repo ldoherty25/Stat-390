@@ -362,36 +362,67 @@ germany <- germany_check %>%
   filter(!(date %in% germany_first_zero_dates))
 
 # Explore target distribution for each country
+# I created both bar and line plots for each country to look at the death distributions
 
 china_plot <- ggplot(data = china, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
+china_line <- ggplot(data = china, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
+
 japan_plot <- ggplot(data = japan, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
+
+japan_line <- ggplot(data = japan, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
 
 france_plot <- ggplot(data = france, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
+france_line <- ggplot(data = france, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
+
 iran_plot <- ggplot(data = iran, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
+
+iran_line <- ggplot(data = iran, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
 
 italy_plot <- ggplot(data = italy, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
+italy_line <- ggplot(data = italy, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
+
 us_plot <- ggplot(data = us, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
+
+us_line <- ggplot(data = us, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
 
 switzerland_plot <- ggplot(data = switzerland, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
+switzerland_line <- ggplot(data = switzerland, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
+
 uk_plot <- ggplot(data = uk, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
-netherland_plot <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
+uk_line <- ggplot(data = uk, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
+
+netherlands_plot <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
+
+netherlands_line <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
 
 germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
+
+germany_line <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
+  geom_line()
 
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
