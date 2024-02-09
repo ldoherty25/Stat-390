@@ -393,7 +393,10 @@ netherland_plot <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)
 germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> luci
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
 
