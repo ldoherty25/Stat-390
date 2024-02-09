@@ -361,6 +361,38 @@ germany_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01
 germany <- germany_check %>%
   filter(!(date %in% germany_first_zero_dates))
 
+# Explore target distribution for each country
+
+china_plot <- ggplot(data = china, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+japan_plot <- ggplot(data = japan, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+france_plot <- ggplot(data = france, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+iran_plot <- ggplot(data = iran, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+italy_plot <- ggplot(data = italy, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+us_plot <- ggplot(data = us, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+switzerland_plot <- ggplot(data = switzerland, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+uk_plot <- ggplot(data = uk, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+netherland_plot <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
+germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
+  geom_bar(stat = "identity")
+
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
 
