@@ -424,6 +424,15 @@ germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
 germany_line <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
+### Find the function that produces data decomposition to include seasonality.
+
+# i will implement it too if needed but here's what I found
+
+# decomposition <- decompose(data, "multiplicative", frequency = )
+
+# seasonal <- decomposition$seasonal
+# trend <- decomposition$trend
+
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
 
