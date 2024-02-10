@@ -16,6 +16,7 @@ library(randomForest)
 library(caret)
 library(imputeTS)
 library(doMC)
+library(patchwork)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -181,7 +182,7 @@ last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
 
 # working through univariate dataset, i ----
 
-# selecting countries for univariate models
+## selecting countries for univariate models ----
 uni_countries <- preprocessed_covid_multi %>%
   group_by(country) %>%
   summarize(
@@ -424,14 +425,80 @@ germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
 germany_line <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
-### Find the function that produces data decomposition to include seasonality.
 
-# i will implement it too if needed but here's what I found
+# adding titles to bar plots
+china_plot <- china_plot + ggtitle("China")
+japan_plot <- japan_plot + ggtitle("Japan")
+france_plot <- france_plot + ggtitle("France")
+iran_plot <- iran_plot + ggtitle("Iran")
+italy_plot <- italy_plot + ggtitle("Italy")
+us_plot <- us_plot + ggtitle("U.S.")
+switzerland_plot <- switzerland_plot + ggtitle("Switzerland")
+uk_plot <- uk_plot + ggtitle("U.K.")
+netherlands_plot <- netherlands_plot + ggtitle("Netherlands")
+germany_plot <- germany_plot + ggtitle("Germany")
 
-# decomposition <- decompose(data, "multiplicative", frequency = )
+# adding titles to line plots
+china_line <- china_line + ggtitle("China")
+japan_line <- japan_line + ggtitle("Japan")
+france_line <- france_line + ggtitle("France")
+iran_line <- iran_line + ggtitle("Iran")
+italy_line <- italy_line + ggtitle("Italy")
+us_line <- us_line + ggtitle("U.S.")
+switzerland_line <- switzerland_line + ggtitle("Switzerland")
+uk_line <- uk_line + ggtitle("U.K.")
+netherlands_line <- netherlands_plot + ggtitle("Netherlands")
+germany_line <- germany_line + ggtitle("Germany")
 
-# seasonal <- decomposition$seasonal
-# trend <- decomposition$trend
+# combining bar plots
+bar_plots_combined <- china_plot + japan_plot + france_plot + iran_plot + italy_plot + 
+  us_plot + switzerland_plot + uk_plot + netherlands_plot + germany_plot +
+  plot_layout(ncol = 2)
+
+# combining line plots
+line_plots_combined <- china_line + japan_line + france_line + iran_line + italy_line + 
+  us_line + switzerland_line + uk_line + netherlands_line + germany_line +
+  plot_layout(ncol = 2)
+
+
+## assessing seasonality ---
+
+# assuming weekly seasonality (as observed below in ACF graphs)
+china_ts_data <- ts(china$owid_new_deaths, frequency = 7)
+japan_ts_data <- ts(japan$owid_new_deaths, frequency = 7)
+france_ts_data <- ts(france$owid_new_deaths, frequency = 7)
+iran_ts_data <- ts(iran$owid_new_deaths, frequency = 7)
+italy_ts_data <- ts(italy$owid_new_deaths, frequency = 7)
+us_ts_data <- ts(us$owid_new_deaths, frequency = 7)
+switzerland_ts_data <- ts(switzerland$owid_new_deaths, frequency = 7)
+uk_ts_data <- ts(uk$owid_new_deaths, frequency = 7)
+netherlands_ts_data <- ts(netherlands$owid_new_deaths, frequency = 7)
+germany_ts_data <- ts(germany$owid_new_deaths, frequency = 7)
+
+# multiplicative decomposition (increasing variance over time)
+china_decomposed_data <- decompose(china_ts_data, type = "multiplicative")
+japan_decomposed_data <- decompose(japan_ts_data, type = "multiplicative")
+france_decomposed_data <- decompose(france_ts_data, type = "multiplicative")
+iran_decomposed_data <- decompose(iran_ts_data, type = "multiplicative")
+italy_decomposed_data <- decompose(italy_ts_data, type = "multiplicative")
+us_decomposed_data <- decompose(us_ts_data, type = "multiplicative")
+switzerland_decomposed_data <- decompose(switzerland_ts_data, type = "multiplicative")
+uk_decomposed_data <- decompose(uk_ts_data, type = "multiplicative")
+netherlands_decomposed_data <- decompose(netherlands_ts_data, type = "multiplicative")
+germany_decomposed_data <- decompose(germany_ts_data, type = "multiplicative")
+
+# plotting decomposed components
+plot(china_decomposed_data)
+plot(japan_decomposed_data)
+plot(france_decomposed_data)
+plot(iran_decomposed_data)
+plot(italy_decomposed_data)
+plot(us_decomposed_data)
+plot(switzerland_decomposed_data)
+plot(uk_decomposed_data)
+plot(netherlands_decomposed_data)
+plot(germany_decomposed_data)
+
 
 # specifying countries
 countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
@@ -554,13 +621,6 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars
 
 # imputing with linear interpolation
 preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
-
-
-
-
-# CHECKED ISSUE WITH AGGREGATING DATA UNTIL HERE ----
-
-
 
 
 ## CREATING LAGS
