@@ -461,7 +461,7 @@ line_plots_combined <- china_line + japan_line + france_line + iran_line + italy
   plot_layout(ncol = 2)
 
 
-## assessing seasonality ---
+## assessing seasonality (at some point place all plots in one visualization) ---
 
 # assuming weekly seasonality (as observed below in ACF graphs)
 china_ts_data <- ts(china$owid_new_deaths, frequency = 7)
