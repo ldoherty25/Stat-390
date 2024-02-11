@@ -18,6 +18,7 @@ library(imputeTS)
 library(doMC)
 library(patchwork)
 library(seastests)
+library(gridExtra)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -116,6 +117,26 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>%
          owid_new_deaths = abs(owid_new_deaths),
          ox_e3_fiscal_measures = abs(ox_e3_fiscal_measures),
          ox_e4_international_support = abs(ox_e4_international_support))
+
+
+## removing outliers ----
+
+# creating a function to remove outliers within a group
+remove_outliers <- function(df, var_name) {
+  Q1 <- quantile(df[[var_name]], 0.25, na.rm = TRUE)
+  Q3 <- quantile(df[[var_name]], 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  df <- df %>% filter(df[[var_name]] >= lower_bound & df[[var_name]] <= upper_bound)
+  return(df)
+}
+
+# applying to each country
+preprocessed_covid_multi <- preprocessed_covid_multi %>%
+  group_by(country) %>%
+  do(remove_outliers(., 'owid_new_deaths')) %>%
+  ungroup()
 
 
 ## assessing final missingness ----
@@ -438,7 +459,7 @@ seastests::isSeasonal(france_ts_data)
 seastests::isSeasonal(iran_ts_data) # FALSE
 seastests::isSeasonal(italy_ts_data)
 seastests::isSeasonal(us_ts_data)
-seastests::isSeasonal(switzerland_ts_data)
+seastests::isSeasonal(switzerland_ts_data) # FALSE
 seastests::isSeasonal(uk_ts_data)
 seastests::isSeasonal(netherlands_ts_data)
 seastests::isSeasonal(germany_ts_data)
@@ -595,8 +616,9 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars
 
 ## imputing ----
 
-# imputing with linear interpolation
-preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
+# performing imputation using Kalman smoothing to estimate missing values
+preprocessed_covid_multi_imputed <- na_kalman(preprocessed_covid_multi)
+
 
 
 ## creating lagged variable ----
@@ -679,21 +701,20 @@ correlation_graph_i <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value))
                        name="Pearson\nCorrelation") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - General')
 
 
 ## custom features ----
 
 # creating custom domain knowledge features
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-  mutate(vulnerability_cf = (scale(owid_cardiovasc_death_rate) + scale(owid_male_smokers)) / 2,
-         mobility_cf = (google_mobility_change_parks + google_mobility_change_retail_and_recreation) / 2,
-         cases_per_population_cf = owid_new_cases / owid_population,
+  mutate(cases_per_population_cf = owid_new_cases / owid_population,
          deaths_per_population_cf = owid_new_deaths / owid_population,
-         combined_interaction_policy_mobility_cf = (ox_c1_school_closing * google_mobility_change_retail_and_recreation +
-                                                    ox_c2_workplace_closing * google_mobility_change_parks) / 2,
          policy_response_impact_cf = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c4_restrictions_on_gatherings +
                                         ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement) / 5)
+
+cf_preprocessed_multi <- preprocessed_covid_multi_imputed %>% 
+  select(cases_per_population_cf, deaths_per_population_cf, policy_response_impact_cf)
 
 
 ## (updated) general correlation matrix ----
@@ -703,10 +724,6 @@ numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
 
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
-
-# establish threshold to reduce dimensions
-# (drop if the absolute value of correlation coefficient is under 0.5)
-correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 
 # adapt to ggplot2
 # (convert wide-format data to long-format data)
@@ -720,7 +737,119 @@ correlation_graph_ii <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)
                        name="Pearson\nCorrelation") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - General')
+
+
+## specific correlation matrices ----
+
+# cases and outcomes
+
+# filter out numerical data
+cases_and_outcomes <- preprocessed_covid_multi_imputed %>% select_if(is.numeric) %>% 
+  select(owid_new_deaths, averaged_confirmed_cases, owid_new_cases, owid_population, owid_male_smokers)
+
+# create a correlation matrix
+co_correlation_matrix <- cor(cases_and_outcomes, use = "complete.obs")
+
+# adapt to ggplot2
+# (convert wide-format data to long-format data)
+co_melted_corr_matrix <- melt(co_correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+co_correlation_graph <- ggplot(co_melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - Cases and Outcomes (+ Demographics)')
+
+# policy measures
+
+# filter out numerical data
+policy_measures <- preprocessed_covid_multi_imputed %>% select_if(is.numeric) %>% 
+  select(owid_new_deaths, ox_c1_school_closing, ox_c1_flag, ox_c2_workplace_closing, ox_c2_flag,
+         ox_c3_flag, ox_c4_restrictions_on_gatherings, ox_c4_flag, ox_c6_stay_at_home_requirements,
+         ox_c7_restrictions_on_internal_movement, ox_h1_flag,
+         ox_containment_health_index)
+
+# create a correlation matrix
+pm_correlation_matrix <- cor(policy_measures, use = "complete.obs")
+
+# adapt to ggplot2
+# (convert wide-format data to long-format data)
+pm_melted_corr_matrix <- melt(pm_correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+pm_correlation_graph <- ggplot(pm_melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - Policy Measures (+ Mobility)')
+
+# custom features
+
+# filter out numerical data
+custom_features <- preprocessed_covid_multi_imputed %>% select_if(is.numeric) %>% 
+  select(owid_new_deaths, cases_per_population_cf, deaths_per_population_cf, policy_response_impact_cf)
+
+# create a correlation matrix
+cf_correlation_matrix <- cor(custom_features, use = "complete.obs")
+
+# adapt to ggplot2
+# (convert wide-format data to long-format data)
+cf_melted_corr_matrix <- melt(cf_correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+cf_correlation_graph <- ggplot(cf_melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - Custom Features')
+
+
+## custom feature relationships ----
+
+# correlation between custom features and target variable
+custom_features_target_corr <- preprocessed_covid_multi_imputed %>%
+  select(owid_new_deaths, ends_with("_cf")) %>%
+  cor(use = "complete.obs") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("feature") %>% 
+  select(feature, owid_new_deaths) %>% 
+  arrange(desc(owid_new_deaths)) %>%
+  DT::datatable()
+
+# Define the plots
+plot1 <- ggplot(preprocessed_covid_multi_imputed, aes(x = cases_per_population_cf, y = owid_new_deaths)) +
+  geom_jitter(alpha = 0.5, width = 0.02, height = 0.02) +
+  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
+  scale_x_continuous(trans = 'log10', labels = scales::scientific) +
+  labs(x = "Cases per Population", y = "New Deaths")
+
+plot2 <- ggplot(preprocessed_covid_multi_imputed, aes(x = deaths_per_population_cf, y = owid_new_deaths)) +
+  geom_jitter(alpha = 0.5, width = 0.3, height = 0) +
+  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
+  scale_x_log10() +
+  labs(x = "Deaths per Population (log scale)", y = "New Deaths")
+
+plot3 <- ggplot(preprocessed_covid_multi_imputed, aes(x = policy_response_impact_cf, y = owid_new_deaths)) +
+  geom_jitter(alpha = 0.5, width = 0.1, height = 0) +
+  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
+  labs(x = "Policy Response Impact", y = "New Deaths")
+
+# Arrange plots in a single visualization
+combined_plot <- grid.arrange(plot1, plot2, plot3, ncol = 1)
+
+# Print the combined plot
+print(combined_plot)
 
 
 ## feature selection ----
@@ -761,7 +890,7 @@ observations_table <- data.frame(
 ) %>% 
   DT::datatable()
 
-# multivariate (64675 x 38)
+# multivariate (48212 x 32)
 dim(preprocessed_covid_multi_imputed)
 
 
