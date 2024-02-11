@@ -417,52 +417,7 @@ line_plots_combined <- china_line + japan_line + france_line + iran_line + italy
   plot_layout(ncol = 2)
 
 
-# ACF and PACF assessment
-
-# specifying countries
-countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
-
-# creating a function to generate ACF and PACF visualizations
-generate_acf_pacf_plots <- function(country_name) {
-  country_data <- preprocessed_covid_multi %>%
-    filter(country == country_name, owid_new_deaths > 0) %>%
-    arrange(date) %>%
-    select(date, owid_new_deaths)
-  if (nrow(country_data) < 2) {
-    cat("Insufficient data for", country_name, "\n")
-    return(NULL)
-  }
-  acf_plot <- acf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
-  pacf_plot <- pacf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
-  return(list(acf_plot = acf_plot, pacf_plot = pacf_plot, country_name = country_name))
-}
-
-# generating plots for each country
-plots_list <- lapply(countries, generate_acf_pacf_plots)
-
-# determining layout and margins
-par(mfrow = c(5, 4), mar = c(5, 2, 2, 2) + 0.1)
-
-# determining plot preferences
-for (i in 1:length(plots_list)) {
-  if (!is.null(plots_list[[i]])) {
-    n <- length(country_data$owid_new_deaths)
-    se <- 1/sqrt(n)
-    plot(plots_list[[i]]$acf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "ACF",
-         ylim = plots_list[[i]]$acf_plot$ylim, xlim = plots_list[[i]]$acf_plot$xlim)
-    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
-    abline(h = 0, col = "blue")
-    abline(h = c(se, -se), col = "red", lty = 2)
-    plot(plots_list[[i]]$pacf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "PACF",
-         ylim = plots_list[[i]]$pacf_plot$ylim, xlim = plots_list[[i]]$pacf_plot$xlim)
-    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
-    abline(h = 0, col = "blue")
-    abline(h = c(se, -se), col = "red", lty = 2)
-  }
-}
-
-
-## assessing seasonality (at some point place all plots in one visualization) ---
+## assessing seasonality, i ---
 
 # assuming weekly seasonality (as observed below in ACF graphs)
 china_ts_data <- ts(china$owid_new_deaths, frequency = 7)
@@ -532,6 +487,53 @@ for (country_name in countries) {
   cat("Country:", country_name, "\n")
   cat("ADF Test Statistic:", adf_test_result_diff$statistic, "\n")
   cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
+}
+
+
+## assessing seasonality, ii ---
+
+# ACF and PACF assessment
+
+# specifying countries
+countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
+
+# creating a function to generate ACF and PACF visualizations
+generate_acf_pacf_plots <- function(country_name) {
+  country_data <- preprocessed_covid_multi %>%
+    filter(country == country_name, owid_new_deaths > 0) %>%
+    arrange(date) %>%
+    select(date, owid_new_deaths)
+  if (nrow(country_data) < 2) {
+    cat("Insufficient data for", country_name, "\n")
+    return(NULL)
+  }
+  acf_plot <- acf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
+  pacf_plot <- pacf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
+  return(list(acf_plot = acf_plot, pacf_plot = pacf_plot, country_name = country_name))
+}
+
+# generating plots for each country
+plots_list <- lapply(countries, generate_acf_pacf_plots)
+
+# determining layout and margins
+par(mfrow = c(5, 4), mar = c(5, 2, 2, 2) + 0.1)
+
+# determining plot preferences
+for (i in 1:length(plots_list)) {
+  if (!is.null(plots_list[[i]])) {
+    n <- length(country_data$owid_new_deaths)
+    se <- 1/sqrt(n)
+    plot(plots_list[[i]]$acf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "ACF",
+         ylim = plots_list[[i]]$acf_plot$ylim, xlim = plots_list[[i]]$acf_plot$xlim)
+    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
+    abline(h = 0, col = "blue")
+    abline(h = c(se, -se), col = "red", lty = 2)
+    plot(plots_list[[i]]$pacf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "PACF",
+         ylim = plots_list[[i]]$pacf_plot$ylim, xlim = plots_list[[i]]$pacf_plot$xlim)
+    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
+    abline(h = 0, col = "blue")
+    abline(h = c(se, -se), col = "red", lty = 2)
+  }
 }
 
 
