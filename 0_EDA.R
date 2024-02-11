@@ -65,7 +65,7 @@ prop_non_missing <- mutated_covid %>%
 
 # finding variables with more than 50% missingness
 columns_to_remove <- prop_non_missing %>% 
-  filter(prop_non_missing < 0.5) %>% 
+  filter(prop_non_missing < 0.4) %>% 
   pull(variable)
 
 # removing unwanted columns
@@ -470,6 +470,9 @@ plot(germany_decomposed_data)
 
 ## assessing stationarity ----
 
+# specifying countries
+countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
+
 # looping through selected countries
 for (country_name in countries) {
   
@@ -493,9 +496,6 @@ for (country_name in countries) {
 ## assessing seasonality, ii ---
 
 # ACF and PACF assessment
-
-# specifying countries
-countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
 
 # creating a function to generate ACF and PACF visualizations
 generate_acf_pacf_plots <- function(country_name) {
@@ -605,7 +605,7 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
 
 
-## cyclical encoding ----
+## temporal features ----
 
 #multivariate
 # holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
@@ -621,17 +621,17 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
 #   return(sin_val)
 # }
 
-multi_time_eng <- preprocessed_covid_multi_imputed %>%
+preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(month = month(date),
          day = mday(date),
-         weekday = weekdays(date, abbreviate = FALSE),
-         season = case_when(
-           month %in% c(3, 4, 5) ~ "Spring",
-           month %in% c(6, 7, 8) ~ "Summer",
-           month %in% c(9, 10, 11) ~ "Fall",
-           TRUE ~ "Winter"))
+         weekday = weekdays(date, abbreviate = FALSE))
+         # season = case_when(
+         #   month %in% c(3, 4, 5) ~ "Spring",
+         #   month %in% c(6, 7, 8) ~ "Summer",
+         #   month %in% c(9, 10, 11) ~ "Fall",
+         #   TRUE ~ "Winter"))
 
-multi_time_eng_cyclic <- multi_time_eng %>%
+preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(cyclical_month_sin = sin(2 * pi * month / 12),
          cyclical_month_cos = cos(2 * pi * month / 12),
          cyclical_weekday_sin = sin(2 * pi * month / 7),
@@ -639,55 +639,149 @@ multi_time_eng_cyclic <- multi_time_eng %>%
          cyclical_dayofmth_sin = sin(2 * pi * month / 31),
          cyclical_dayofmth_cos = cos(2 * pi * month / 31))
            
-          #list(cyclical_encode_sin(as.integer(factor(multi_time_eng$Month, levels = month.name)), 
+#list(cyclical_encode_sin(as.integer(factor(multi_time_eng$Month, levels = month.name)), 
                                            #    time_period = 12))) #%>%
- # bind_cols(., unnest(cols = multi_time_eng$cyclical_month)) #%>%
- # rename(cyclical_month_sin = )
- # mutate(cyclical_weekday = list(cyclical_encode(as.integer(factor(weekday, levels = weekday.name)),
+# bind_cols(., unnest(cols = multi_time_eng$cyclical_month)) #%>%
+# rename(cyclical_month_sin = )
+# mutate(cyclical_weekday = list(cyclical_encode(as.integer(factor(weekday, levels = weekday.name)),
                                                  #time_period = 7))) %>%
-  #bind_cols(., unnest(multi_time_eng$cyclical_weekday))
+#bind_cols(., unnest(multi_time_eng$cyclical_weekday))
 
-#plotting season and new_deaths
-ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
-  geom_boxplot()
-ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
-  geom_violin()
-ggplot(multi_time_eng, mapping = aes(x = season))+
-  geom_bar() +
-  labs(title = "Seasonal Count Plot")
-ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
-  geom_histogram()+
-  facet_wrap(~season)
+# #plotting season and new_deaths
+# ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
+#   geom_boxplot()
+# ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
+#   geom_violin()
+# ggplot(multi_time_eng, mapping = aes(x = season))+
+#   geom_bar() +
+#   labs(title = "Seasonal Count Plot")
+# ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
+#   geom_histogram()+
+#   facet_wrap(~season)
 
-#plotting weekday and new_deaths
-ggplot(multi_time_eng, mapping = aes(x = weekday, y = owid_new_deaths))+
+# plotting weekday and new_deaths
+ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = weekday, y = owid_new_deaths))+
   geom_boxplot()
-ggplot(multi_time_eng, mapping = aes(x = weekday, y = owid_new_deaths))+
-  geom_violin()
-ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
-  geom_histogram()+
-  facet_wrap(~weekday)
+# ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = weekday, y = owid_new_deaths))+
+#   geom_violin()
+# ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = owid_new_deaths))+
+#   geom_histogram()+
+#   facet_wrap(~weekday)
 
-#plotting IsHoliday with new deaths
-ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
-  geom_boxplot()
-ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
-  geom_violin()
-ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
-  geom_histogram()+
-  facet_wrap(~IsHoliday)
-ggplot(multi_time_eng, mapping = aes(x = IsHoliday))+
-  geom_bar() +
-  labs(title = "Holiday Count Plot")
+# #plotting IsHoliday with new deaths
+# ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
+#   geom_boxplot()
+# ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
+#   geom_violin()
+# ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
+#   geom_histogram()+
+#   facet_wrap(~IsHoliday)
+# ggplot(multi_time_eng, mapping = aes(x = IsHoliday))+
+#   geom_bar() +
+#   labs(title = "Holiday Count Plot")
+
+## assessing weekday ----
+
+# grouping
+deaths_by_weekday <- preprocessed_covid_multi_imputed %>%
+  group_by(weekday) %>%
+  summarize(total_deaths = sum(owid_new_deaths))
+
+# total deaths calculation and rounding to whole number
+total_deaths <- round(sum(deaths_by_weekday$total_deaths))
+
+# rounding proportion to three decimal points and displaying table
+deaths_by_weekday <- deaths_by_weekday %>%
+  mutate(proportion = round(total_deaths / sum(total_deaths), 3),
+         total_deaths = as.integer(total_deaths)) %>% 
+  DT::datatable()
+
+
+# testing significance
+
+# Create a contingency table of observed frequencies
+observed <- table(preprocessed_covid_multi_imputed$weekday)
+
+# Perform chi-squared test
+chi_squared_test <- chisq.test(observed)
+
+# Print the results
+print(chi_squared_test)
+
+
+## (preliminary) correlation matrix ----
+
+# filter out numerical data
+numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
+
+# create a correlation matrix
+correlation_matrix <- cor(numerical_data, use = "complete.obs")
+
+# establish threshold to reduce dimensions
+# (drop if the absolute value of correlation coefficient is under 0.5)
+correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
+
+# adapt to ggplot2
+# (convert wide-format data to long-format data)
+melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
+
 
 ## custom features ----
 
+# preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
+#   mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(averaged_confirmed_cases, 7, fill = NA, align = 'right')) %>% 
+#   mutate(vulnerability_index = (owid_aged_65_older + owid_aged_70_older + owid_diabetes_prevalence + owid_cardiovasc_death_rate) / 4) %>% 
+#   mutate(policy_stringency_index = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c3_cancel_public_events + ox_c4_restrictions_on_gatherings + ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement + ox_c8_international_travel_controls) / 7,
+#          policy_population_index = policy_stringency_index * owid_population_density) %>% 
+#   mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
+
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-  mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(averaged_confirmed_cases, 7, fill = NA, align = 'right')) %>% 
-  mutate(vulnerability_index = (owid_aged_65_older + owid_aged_70_older + owid_diabetes_prevalence + owid_cardiovasc_death_rate) / 4) %>% 
-  mutate(policy_stringency_index = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c3_cancel_public_events + ox_c4_restrictions_on_gatherings + ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement + ox_c8_international_travel_controls) / 7,
-         policy_population_index = policy_stringency_index * owid_population_density) %>% 
-  mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
+  mutate(vulnerability_cf = (scale(owid_cardiovasc_death_rate) + scale(owid_male_smokers)) / 2,
+         mobility_cf = (google_mobility_change_parks + google_mobility_change_retail_and_recreation) / 2,
+         cases_per_population_cf = owid_new_cases / owid_population,
+         deaths_per_population_cf = owid_new_deaths / owid_population,
+         combined_interaction_policy_mobility_cf = (ox_c1_school_closing * google_mobility_change_retail_and_recreation +
+                                                    ox_c2_workplace_closing * google_mobility_change_parks) / 2,
+         policy_response_impact_cf = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c4_restrictions_on_gatherings +
+                                        ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement) / 5)
+
+
+## (updated) correlation matrix ----
+
+# filter out numerical data
+numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
+
+# create a correlation matrix
+correlation_matrix <- cor(numerical_data, use = "complete.obs")
+
+# establish threshold to reduce dimensions
+# (drop if the absolute value of correlation coefficient is under 0.5)
+correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
+
+# adapt to ggplot2
+# (convert wide-format data to long-format data)
+melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
+
+# produce heatmap
+correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
+
 
 ### COMMENTED OUT UNI_GROUPED UNTIL HERE
 
