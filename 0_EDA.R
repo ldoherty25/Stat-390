@@ -562,8 +562,8 @@ for (country_name in countries) {
   country_datasets[[country_name]] <- list(train_data = train_data, test_data = test_data)
   
   # writing csv files
-  write.csv(train_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_train.csv")), row.names = FALSE)
-  write.csv(test_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_test.csv")), row.names = FALSE)
+  write.csv(train_data, file.path("data/preprocessed/univariate/split/train", paste0(tolower(gsub("\\s+", "", country_name)), "_train.csv")), row.names = FALSE)
+  write.csv(test_data, file.path("data/preprocessed/univariate/split/test", paste0(tolower(gsub("\\s+", "", country_name)), "_test.csv")), row.names = FALSE)
 }
 
 
@@ -607,30 +607,13 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
 
 ## temporal features ----
 
-#multivariate
-# holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
-#                       "2020-07-31", "2020-11-14", "2020-02-14", "2020-05-05", "2020-12-10", "2020-12-18",
-#                       "2020-10-31", "2020-12-21", "2020-11-01", "2020-11-02", "2020-11-26", "2020-03-19"))
-##Cyclical encoding
-#Months_df <- data.frame(Month = c("January", "February", "March", "April", "May", "June", "July", 
-#                                  "August", "September", "October", "November", "December"))
-# 
-# # defining the function for cyclical encoding (sin)
-# cyclical_encode_sin <- function(x, time_period) {
-#   sin_val <- sin(2 * pi * x / time_period)
-#   return(sin_val)
-# }
-
+# adding date features
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(month = month(date),
          day = mday(date),
          weekday = weekdays(date, abbreviate = FALSE))
-         # season = case_when(
-         #   month %in% c(3, 4, 5) ~ "Spring",
-         #   month %in% c(6, 7, 8) ~ "Summer",
-         #   month %in% c(9, 10, 11) ~ "Fall",
-         #   TRUE ~ "Winter"))
 
+# cyclical encoding
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(cyclical_month_sin = sin(2 * pi * month / 12),
          cyclical_month_cos = cos(2 * pi * month / 12),
@@ -638,47 +621,10 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
          cyclical_weekday_cos = cos(2 * pi * month / 7),
          cyclical_dayofmth_sin = sin(2 * pi * month / 31),
          cyclical_dayofmth_cos = cos(2 * pi * month / 31))
-           
-#list(cyclical_encode_sin(as.integer(factor(multi_time_eng$Month, levels = month.name)), 
-                                           #    time_period = 12))) #%>%
-# bind_cols(., unnest(cols = multi_time_eng$cyclical_month)) #%>%
-# rename(cyclical_month_sin = )
-# mutate(cyclical_weekday = list(cyclical_encode(as.integer(factor(weekday, levels = weekday.name)),
-                                                 #time_period = 7))) %>%
-#bind_cols(., unnest(multi_time_eng$cyclical_weekday))
 
-# #plotting season and new_deaths
-# ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
-#   geom_boxplot()
-# ggplot(multi_time_eng, mapping = aes(x = season, y = owid_new_deaths))+
-#   geom_violin()
-# ggplot(multi_time_eng, mapping = aes(x = season))+
-#   geom_bar() +
-#   labs(title = "Seasonal Count Plot")
-# ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
-#   geom_histogram()+
-#   facet_wrap(~season)
-
-# plotting weekday and new_deaths
+# plotting weekday and target variable
 ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = weekday, y = owid_new_deaths))+
   geom_boxplot()
-# ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = weekday, y = owid_new_deaths))+
-#   geom_violin()
-# ggplot(preprocessed_covid_multi_imputed, mapping = aes(x = owid_new_deaths))+
-#   geom_histogram()+
-#   facet_wrap(~weekday)
-
-# #plotting IsHoliday with new deaths
-# ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
-#   geom_boxplot()
-# ggplot(multi_time_eng, mapping = aes(x = IsHoliday, y = owid_new_deaths))+
-#   geom_violin()
-# ggplot(multi_time_eng, mapping = aes(x = owid_new_deaths))+
-#   geom_histogram()+
-#   facet_wrap(~IsHoliday)
-# ggplot(multi_time_eng, mapping = aes(x = IsHoliday))+
-#   geom_bar() +
-#   labs(title = "Holiday Count Plot")
 
 ## assessing weekday ----
 
@@ -699,17 +645,17 @@ deaths_by_weekday <- deaths_by_weekday %>%
 
 # testing significance
 
-# Create a contingency table of observed frequencies
+# creating table of observed frequencies
 observed <- table(preprocessed_covid_multi_imputed$weekday)
 
-# Perform chi-squared test
+# performing chi-squared test
 chi_squared_test <- chisq.test(observed)
 
-# Print the results
+# printing
 print(chi_squared_test)
 
 
-## (preliminary) correlation matrix ----
+## (preliminary) general correlation matrix ----
 
 # filter out numerical data
 numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
@@ -726,7 +672,7 @@ correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
 
 # produce heatmap
-correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+correlation_graph_i <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
@@ -738,13 +684,7 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
 
 ## custom features ----
 
-# preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-#   mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(averaged_confirmed_cases, 7, fill = NA, align = 'right')) %>% 
-#   mutate(vulnerability_index = (owid_aged_65_older + owid_aged_70_older + owid_diabetes_prevalence + owid_cardiovasc_death_rate) / 4) %>% 
-#   mutate(policy_stringency_index = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c3_cancel_public_events + ox_c4_restrictions_on_gatherings + ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement + ox_c8_international_travel_controls) / 7,
-#          policy_population_index = policy_stringency_index * owid_population_density) %>% 
-#   mutate_if(is.numeric, ~replace(., is.infinite(.) | is.nan(.), NA))
-
+# creating custom domain knowledge features
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
   mutate(vulnerability_cf = (scale(owid_cardiovasc_death_rate) + scale(owid_male_smokers)) / 2,
          mobility_cf = (google_mobility_change_parks + google_mobility_change_retail_and_recreation) / 2,
@@ -756,7 +696,7 @@ preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
                                         ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement) / 5)
 
 
-## (updated) correlation matrix ----
+## (updated) general correlation matrix ----
 
 # filter out numerical data
 numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
@@ -773,7 +713,7 @@ correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
 
 # produce heatmap
-correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
+correlation_graph_ii <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
@@ -783,68 +723,59 @@ correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
   labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
 
 
-### COMMENTED OUT UNI_GROUPED UNTIL HERE
-
 ## feature selection ----
 
-# training an rf model
-rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
-
-# computing importance scores
-importance_scores <- importance(rf_model)
-
-# converting to data frame
-importance_df <- as.data.frame(importance_scores)
-
-# make sure there are no duplicate names
-names(importance_df) <- make.unique(names(importance_df))
-
-# incorporating variable name column
-importance_df$Variable <- rownames(importance_df)
-
-# melting to long format
-importance_long <- melt(importance_df, id.vars = "Variable")
-
-# producing plot
-importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +  # Flip the axes to make the plot horizontal
-  theme_minimal() +
-  labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
-  theme(plot.title = element_text(hjust = 0.5))
+# # training a random forest model
+# rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
+# 
+# # computing importance scores
+# importance_scores <- importance(rf_model)
+# 
+# # converting to data frame
+# importance_df <- as.data.frame(importance_scores)
+# 
+# # make sure there are no duplicate names
+# names(importance_df) <- make.unique(names(importance_df))
+# 
+# # incorporating variable name column
+# importance_df$Variable <- rownames(importance_df)
+# 
+# # melting to long format
+# importance_long <- melt(importance_df, id.vars = "Variable")
+# 
+# # producing plot
+# importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
+#   geom_bar(stat = "identity") +
+#   coord_flip() +  # Flip the axes to make the plot horizontal
+#   theme_minimal() +
+#   labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
+#   theme(plot.title = element_text(hjust = 0.5))
 
 
 # final dimensions ----
 
-# ARIMA (2128)
+# univariate (2513)
 observations_table <- data.frame(
   Country = c("China", "Japan", "France", "Iran", "Italy", "US", "Switzerland", "UK", "Netherlands", "Germany"),
   Observations = c(nrow(china), nrow(japan), nrow(france), nrow(iran), nrow(italy), nrow(us), nrow(switzerland), nrow(uk), nrow(netherlands), nrow(germany))
 ) %>% 
   DT::datatable()
 
-
-# multivariate (64675 x 57)
+# multivariate (64675 x 38)
 dim(preprocessed_covid_multi_imputed)
 
 
 
 # saving files ----
-save(preprocessed_covid_multi_imputed, file = "data/preprocessed/multivariate/preprocessed_covid_multi_imputed")
-save(missing_prop_covid, file = "visuals/missing_prop_covid.rda")
-save(correlation_graph, file = "visuals/correlation_graph.rda")
-save(missing_graph, file = "visuals/missing_graph.rda")
-save(tv_distribution_log, file = "visuals/tv_distribution_log.rda")
-save(china, file = "data/preprocessed/univariate/arima/china.rda")
-save(japan, file = "data/preprocessed/univariate/arima/japan.rda")
-save(france, file = "data/preprocessed/univariate/arima/france.rda")
-save(iran, file = "data/preprocessed/univariate/arima/iran.rda")
-save(italy, file = "data/preprocessed/univariate/arima/italy.rda")
-save(us, file = "data/preprocessed/univariate/arima/us.rda")
-save(switzerland, file = "data/preprocessed/univariate/arima/switzerland.rda")
-save(uk, file = "data/preprocessed/univariate/arima/uk.rda")
-save(netherlands, file = "data/preprocessed/univariate/arima/netherlands.rda")
-save(germany, file = "data/preprocessed/univariate/arima/germany.rda")
-save(acf_plot, file = "visuals/acf_plot.rda")
-save(pacf_plot, file = "visuals/pacf_plot.rda")
-save(importance, file = "visuals/importance.rda")
+save(preprocessed_covid_multi_imputed, file = "data/preprocessed/multivariate/not_split/preprocessed_covid_multi_imputed.rda")
+save(china, file = "data/preprocessed/univariate/not_split/univariate_china.rda")
+save(japan, file = "data/preprocessed/univariate/not_split/univariate_japan.rda")
+save(france, file = "data/preprocessed/univariate/not_split/univariate_france.rda")
+save(iran, file = "data/preprocessed/univariate/not_split/univariate_iran.rda")
+save(italy, file = "data/preprocessed/univariate/not_split/univariate_italy.rda")
+save(us, file = "data/preprocessed/univariate/not_split/univariate_us.rda")
+save(switzerland, file = "data/preprocessed/univariate/not_split/univariate_switzerland.rda")
+save(uk, file = "data/preprocessed/univariate/not_split/univariate_uk.rda")
+save(netherlands, file = "data/preprocessed/univariate/not_split/univariate_netherlands.rda")
+save(germany, file = "data/preprocessed/univariate/not_split/univariate_germany.rda")
+# save(importance, file = "visuals/importance.rda")
