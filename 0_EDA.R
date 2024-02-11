@@ -2,7 +2,7 @@
 
 # primary checks ----
 
-## load packages ----
+# load packages
 library(tidyverse)
 library(tidymodels)
 library(reshape2)
@@ -17,6 +17,7 @@ library(caret)
 library(imputeTS)
 library(doMC)
 library(patchwork)
+library(seastests)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -41,18 +42,20 @@ skimr::skim_without_charts(covid)
 
 # working through multivariate dataset, i ----
 
+## preliminary cleaning ----
+
 # calculate average of identical variables
 mutated_covid <- covid %>%
-  mutate(average_confirmed = rowMeans(select(., jhu_confirmed, owid_total_cases, ox_confirmed_cases), na.rm = TRUE),
-         average_cummulative_deaths = rowMeans(select(., jhu_deaths, owid_total_deaths, ox_confirmed_deaths), na.rm = TRUE),
-         average_stringency_index = rowMeans(select(., owid_stringency_index, ox_stringency_index), na.rm = TRUE)) %>%
+  mutate(averaged_confirmed_cases = rowMeans(select(., jhu_confirmed, owid_total_cases, ox_confirmed_cases), na.rm = TRUE),
+         averaged_cummulative_deaths = rowMeans(select(., jhu_deaths, owid_total_deaths, ox_confirmed_deaths), na.rm = TRUE),
+         averaged_stringency_index = rowMeans(select(., owid_stringency_index, ox_stringency_index), na.rm = TRUE)) %>%
   select(-jhu_confirmed, -owid_total_cases, -ox_confirmed_cases, 
          -jhu_deaths, -owid_total_deaths, -ox_confirmed_deaths, 
          -owid_stringency_index, -ox_stringency_index) %>% 
   mutate(
-    average_confirmed = replace(average_confirmed, is.nan(average_confirmed), NA),
-    average_cummulative_deaths = replace(average_cummulative_deaths, is.nan(average_cummulative_deaths), NA),
-    average_stringency_index = replace(average_stringency_index, is.nan(average_stringency_index), NA)
+    averaged_confirmed_cases = replace(averaged_confirmed_cases, is.nan(averaged_confirmed_cases), NA),
+    averaged_cummulative_deaths = replace(averaged_cummulative_deaths, is.nan(averaged_cummulative_deaths), NA),
+    averaged_stringency_index = replace(averaged_stringency_index, is.nan(averaged_stringency_index), NA)
     )
 
 # missingness per variable
@@ -69,10 +72,10 @@ columns_to_remove <- prop_non_missing %>%
 covid_cleaned <- mutated_covid %>% 
   select(-all_of(columns_to_remove))
 
-# selecting only non-redundant variables; new: removed average_cummulative_deaths
+# selecting only non-redundant variables; new: removed averaged_cummulative_deaths
 preprocessed_covid_multi <- covid_cleaned %>%
-  select(country, date, average_confirmed, # average_cummulative_deaths,
-         owid_new_cases, owid_new_deaths, average_stringency_index,
+  select(country, date, averaged_confirmed_cases,
+         owid_new_cases, owid_new_deaths, averaged_stringency_index,
          owid_population, owid_population_density, owid_median_age,
          owid_aged_65_older, owid_aged_70_older, owid_gdp_per_capita, owid_cardiovasc_death_rate,
          owid_diabetes_prevalence, owid_female_smokers, owid_male_smokers, owid_hospital_beds_per_thousand, 
@@ -129,33 +132,6 @@ missing_graph <- preprocessed_covid_multi %>%
   labs(title = "Missing Data")
 
 
-## (preliminary) correlation matrix ----
-
-# filter out numerical data
-numerical_data <- preprocessed_covid_multi %>% select_if(is.numeric)
-
-# create a correlation matrix
-correlation_matrix <- cor(numerical_data, use = "complete.obs")
-
-# establish threshold to reduce dimensions
-# (drop if the absolute value of correlation coefficient is under 0.5)
-correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
-
-# adapt to ggplot2
-# (convert wide-format data to long-format data)
-melted_corr_matrix <- melt(correlation_matrix, na.rm = TRUE)
-
-# produce heatmap
-correlation_graph <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-1,1), space = "Lab", 
-                       name="Pearson\nCorrelation") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = '', y = '', title = 'Correlation Matrix Heatmap')
-
-
 ## target variable consideration ----
 
 # graphing distribution with square root transformation
@@ -171,18 +147,12 @@ tv_distribution_log <- preprocessed_covid_multi %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 
-## miscellaneous ----
-
-# determining beginning and start dates of data collection
-preprocessed_covid_multi$date <- as.Date(preprocessed_covid_multi$date)
-first_date <- min(preprocessed_covid_multi$date, na.rm = TRUE)
-last_date <- max(preprocessed_covid_multi$date, na.rm = TRUE)
-
-
 
 # working through univariate dataset, i ----
 
-## selecting countries for univariate models ----
+## creating country datasets ----
+
+# selecting countries for univariate models
 uni_countries <- preprocessed_covid_multi %>%
   group_by(country) %>%
   summarize(
@@ -222,7 +192,6 @@ japan_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-0
                             "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03", 
                             "2020-02-04", "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08",
                             "2020-02-09", "2020-02-10", "2020-02-11", "2020-02-12")
-
 japan <- japan_check %>%
   filter(!(date %in% japan_first_zero_dates))
 
@@ -237,7 +206,6 @@ france_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-
                              "2020-01-29", "2020-01-30", "2020-01-31", "2020-02-01", "2020-02-02", "2020-02-03",
                              "2020-02-04", "2020-02-05", "2020-02-06", "2020-02-07", "2020-02-08", "2020-02-09",
                              "2020-02-10", "2020-02-11", "2020-02-12", "2020-02-13", "2020-02-14")
-
 france <- france_check %>%
   filter(!(date %in% france_first_zero_dates))
 
@@ -304,7 +272,6 @@ swiss_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01-0
                             "2020-02-29", "2020-03-01", "2020-03-02", "2020-03-03", "2020-03-04", "2020-03-05")
 switzerland <- switzerland_check %>%
   filter(!(date %in% swiss_first_zero_dates))
-  
 
 uk_check <- preprocessed_covid_multi %>%
   filter(country == "United Kingdom") %>% 
@@ -362,69 +329,58 @@ germany_first_zero_dates <- c("2019-12-31", "2020-01-01", "2020-01-02", "2020-01
 germany <- germany_check %>%
   filter(!(date %in% germany_first_zero_dates))
 
-# Explore target distribution for each country
-# I created both bar and line plots for each country to look at the death distributions
+
+## exploring target distribution for each country (bar and plot) ----
 
 china_plot <- ggplot(data = china, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 china_line <- ggplot(data = china, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 japan_plot <- ggplot(data = japan, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 japan_line <- ggplot(data = japan, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 france_plot <- ggplot(data = france, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 france_line <- ggplot(data = france, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 iran_plot <- ggplot(data = iran, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 iran_line <- ggplot(data = iran, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 italy_plot <- ggplot(data = italy, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 italy_line <- ggplot(data = italy, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 us_plot <- ggplot(data = us, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 us_line <- ggplot(data = us, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 switzerland_plot <- ggplot(data = switzerland, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 switzerland_line <- ggplot(data = switzerland, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 uk_plot <- ggplot(data = uk, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 uk_line <- ggplot(data = uk, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 netherlands_plot <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 netherlands_line <- ggplot(data = netherlands, aes(x = date, y = owid_new_deaths)) +
   geom_line()
 
 germany_plot <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_bar(stat = "identity")
-
 germany_line <- ggplot(data = germany, aes(x = date, y = owid_new_deaths)) +
   geom_line()
-
 
 # adding titles to bar plots
 china_plot <- china_plot + ggtitle("China")
@@ -461,6 +417,51 @@ line_plots_combined <- china_line + japan_line + france_line + iran_line + italy
   plot_layout(ncol = 2)
 
 
+# ACF and PACF assessment
+
+# specifying countries
+countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
+
+# creating a function to generate ACF and PACF visualizations
+generate_acf_pacf_plots <- function(country_name) {
+  country_data <- preprocessed_covid_multi %>%
+    filter(country == country_name, owid_new_deaths > 0) %>%
+    arrange(date) %>%
+    select(date, owid_new_deaths)
+  if (nrow(country_data) < 2) {
+    cat("Insufficient data for", country_name, "\n")
+    return(NULL)
+  }
+  acf_plot <- acf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
+  pacf_plot <- pacf(country_data$owid_new_deaths, main = paste(country_name), ylim = c(-1,1), mar = c(5, 4, 4, 2) + 0.1)
+  return(list(acf_plot = acf_plot, pacf_plot = pacf_plot, country_name = country_name))
+}
+
+# generating plots for each country
+plots_list <- lapply(countries, generate_acf_pacf_plots)
+
+# determining layout and margins
+par(mfrow = c(5, 4), mar = c(5, 2, 2, 2) + 0.1)
+
+# determining plot preferences
+for (i in 1:length(plots_list)) {
+  if (!is.null(plots_list[[i]])) {
+    n <- length(country_data$owid_new_deaths)
+    se <- 1/sqrt(n)
+    plot(plots_list[[i]]$acf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "ACF",
+         ylim = plots_list[[i]]$acf_plot$ylim, xlim = plots_list[[i]]$acf_plot$xlim)
+    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
+    abline(h = 0, col = "blue")
+    abline(h = c(se, -se), col = "red", lty = 2)
+    plot(plots_list[[i]]$pacf_plot$acf, type = "h", main = "", xlab = "Lag", ylab = "PACF",
+         ylim = plots_list[[i]]$pacf_plot$ylim, xlim = plots_list[[i]]$pacf_plot$xlim)
+    title(main = paste(plots_list[[i]]$country_name), line = 1, cex.main = 0.8)
+    abline(h = 0, col = "blue")
+    abline(h = c(se, -se), col = "red", lty = 2)
+  }
+}
+
+
 ## assessing seasonality (at some point place all plots in one visualization) ---
 
 # assuming weekly seasonality (as observed below in ACF graphs)
@@ -475,6 +476,18 @@ uk_ts_data <- ts(uk$owid_new_deaths, frequency = 7)
 netherlands_ts_data <- ts(netherlands$owid_new_deaths, frequency = 7)
 germany_ts_data <- ts(germany$owid_new_deaths, frequency = 7)
 
+# using isSeasonal()
+seastests::isSeasonal(china_ts_data) # FALSE
+seastests::isSeasonal(japan_ts_data)
+seastests::isSeasonal(france_ts_data)
+seastests::isSeasonal(iran_ts_data) # FALSE
+seastests::isSeasonal(italy_ts_data)
+seastests::isSeasonal(us_ts_data)
+seastests::isSeasonal(switzerland_ts_data)
+seastests::isSeasonal(uk_ts_data)
+seastests::isSeasonal(netherlands_ts_data)
+seastests::isSeasonal(germany_ts_data)
+
 # multiplicative decomposition (increasing variance over time)
 china_decomposed_data <- decompose(china_ts_data, type = "multiplicative")
 japan_decomposed_data <- decompose(japan_ts_data, type = "multiplicative")
@@ -487,7 +500,7 @@ uk_decomposed_data <- decompose(uk_ts_data, type = "multiplicative")
 netherlands_decomposed_data <- decompose(netherlands_ts_data, type = "multiplicative")
 germany_decomposed_data <- decompose(germany_ts_data, type = "multiplicative")
 
-# plotting decomposed components
+# plotting decomposed data
 plot(china_decomposed_data)
 plot(japan_decomposed_data)
 plot(france_decomposed_data)
@@ -500,46 +513,7 @@ plot(netherlands_decomposed_data)
 plot(germany_decomposed_data)
 
 
-# specifying countries
-countries <- c("China", "Japan", "France", "Iran, Islamic Rep.", "Italy", "United States", "Switzerland", "United Kingdom", "Netherlands", "Germany")
-
-# creating a function to generate ACF and PACF visualizations
-generate_acf_pacf_plots <- function(country_name) {
-  country_data <- preprocessed_covid_multi %>%
-    filter(country == country_name, owid_new_deaths > 0) %>%
-    arrange(date) %>%  # Sort data by date
-    select(date, owid_new_deaths)
-  
-  if (nrow(country_data) < 2) {
-    cat("Insufficient data for", country_name, "\n")
-    return(NULL)
-  }
-  
-  acf_plot <- acf(country_data$owid_new_deaths, main = paste("ACF - ", country_name), ylim = c(-1,1), mar = c(4, 4, 2, 1))
-  pacf_plot <- pacf(country_data$owid_new_deaths, main = paste("PACF - ", country_name), ylim = c(-1,1), mar = c(4, 4, 2, 1))
-  
-  return(list(acf_plot = acf_plot, pacf_plot = pacf_plot, country_name = country_name))
-}
-
-# generating plots for each country
-plots_list <- lapply(countries, generate_acf_pacf_plots)
-
-# determining layout
-par(mfrow = c(5, 4), mar = c(4, 4, 2, 1))
-
-# including country names
-for (i in 1:10) {
-  if (!is.null(plots_list[[i]])) {
-    plot(plots_list[[i]]$acf_plot)
-    title(main = plots_list[[i]]$country_name, line = -1, cex.main = 0.8)
-    plot(plots_list[[i]]$pacf_plot)
-    title(main = plots_list[[i]]$country_name, line = -1, cex.main = 0.8)
-  }
-}
-
-# resetting plot layout
-par(mfrow = c(1, 1))
-
+## assessing stationarity ----
 
 # looping through selected countries
 for (country_name in countries) {
@@ -561,7 +535,7 @@ for (country_name in countries) {
 }
 
 
-## creating separate dataset for ARIMA and Univariate Prophet models ----
+## creating univariate dataset ----
 
 # creating storage list
 country_datasets <- list()
@@ -569,9 +543,8 @@ country_datasets <- list()
 # determining split ratio
 split_ratio <- 0.8
 
-# creaing datasets for each country
+# creating datasets for each country
 for (country_name in countries) {
-  # Filter the data for the current country
   country_data <- preprocessed_covid_multi %>%
     filter(country == country_name, owid_new_deaths > 0) %>%
     select(date, owid_new_deaths)
@@ -590,6 +563,7 @@ for (country_name in countries) {
   write.csv(train_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_train.csv")), row.names = FALSE)
   write.csv(test_data, file.path("data/preprocessed/univariate/arima/split_datasets", paste0(country_name, "_test.csv")), row.names = FALSE)
 }
+
 
 
 # working through multivariate dataset, ii ----
@@ -623,45 +597,45 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>% select(-all_of(low_vars
 preprocessed_covid_multi_imputed <- na_interpolation(preprocessed_covid_multi)
 
 
-## CREATING LAGS
+## creating lagged variable ----
+
+preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
+  mutate(lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
+
+
+## cyclical encoding ----
 
 #multivariate
-preprocessed_covid_multi_lag <- preprocessed_covid_multi_imputed %>%
-  mutate(lagged_nd_1 = dplyr::lag(owid_new_deaths, n=1),
-         lagged_nd_2 = dplyr::lag(owid_new_deaths, n=2),
-         lagged_nd_7 = dplyr::lag(owid_new_deaths, n=7))
-  
-#multivariate
-holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
-                      "2020-07-31", "2020-11-14", "2020-02-14", "2020-05-05", "2020-12-10", "2020-12-18",
-                      "2020-10-31", "2020-12-21", "2020-11-01", "2020-11-02", "2020-11-26", "2020-03-19"))
+# holidays <- as.Date(c("2020-01-01", "2023-04-12", "2020-12-24", "2020-12-25", "2020-05-23", "2020-05-04", "2020-07-30",
+#                       "2020-07-31", "2020-11-14", "2020-02-14", "2020-05-05", "2020-12-10", "2020-12-18",
+#                       "2020-10-31", "2020-12-21", "2020-11-01", "2020-11-02", "2020-11-26", "2020-03-19"))
 ##Cyclical encoding
 #Months_df <- data.frame(Month = c("January", "February", "March", "April", "May", "June", "July", 
 #                                  "August", "September", "October", "November", "December"))
-# Function to perform cyclical encoding
-cyclical_encode_sin <- function(x, time_period) {
-  sin_val <- sin(2 * pi * x / time_period)
-  return(sin_val)
-}
-  
+# 
+# # defining the function for cyclical encoding (sin)
+# cyclical_encode_sin <- function(x, time_period) {
+#   sin_val <- sin(2 * pi * x / time_period)
+#   return(sin_val)
+# }
+
 multi_time_eng <- preprocessed_covid_multi_imputed %>%
-  mutate(Month = month(date),
+  mutate(month = month(date),
          day = mday(date),
          weekday = weekdays(date, abbreviate = FALSE),
          season = case_when(
-           Month %in% c(3, 4, 5) ~ "Spring",
-           Month %in% c(6, 7, 8) ~ "Summer",
-           Month %in% c(9, 10, 11) ~ "Fall",
-           TRUE ~ "Winter"),
-         IsHoliday = date %in% holidays)
+           month %in% c(3, 4, 5) ~ "Spring",
+           month %in% c(6, 7, 8) ~ "Summer",
+           month %in% c(9, 10, 11) ~ "Fall",
+           TRUE ~ "Winter"))
 
 multi_time_eng_cyclic <- multi_time_eng %>%
-  mutate(cyclical_month_sin = sin(2 * pi * Month / 12),
-         cyclical_month_cos = cos(2 * pi * Month / 12),
-         cyclical_weekday_sin = sin(2 * pi * Month / 7),
-         cyclical_weekday_cos = cos(2 * pi * Month / 7),
-         cyclical_dayofmth_sin = sin(2 * pi * Month / 31),
-         cyclical_dayofmth_cos = cos(2 * pi * Month / 31))
+  mutate(cyclical_month_sin = sin(2 * pi * month / 12),
+         cyclical_month_cos = cos(2 * pi * month / 12),
+         cyclical_weekday_sin = sin(2 * pi * month / 7),
+         cyclical_weekday_cos = cos(2 * pi * month / 7),
+         cyclical_dayofmth_sin = sin(2 * pi * month / 31),
+         cyclical_dayofmth_cos = cos(2 * pi * month / 31))
            
           #list(cyclical_encode_sin(as.integer(factor(multi_time_eng$Month, levels = month.name)), 
                                            #    time_period = 12))) #%>%
@@ -707,7 +681,7 @@ ggplot(multi_time_eng, mapping = aes(x = IsHoliday))+
 ## custom features ----
 
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-  mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(average_confirmed, 7, fill = NA, align = 'right')) %>% 
+  mutate(capacity_to_case = owid_hospital_beds_per_thousand / rollmean(averaged_confirmed_cases, 7, fill = NA, align = 'right')) %>% 
   mutate(vulnerability_index = (owid_aged_65_older + owid_aged_70_older + owid_diabetes_prevalence + owid_cardiovasc_death_rate) / 4) %>% 
   mutate(policy_stringency_index = (ox_c1_school_closing + ox_c2_workplace_closing + ox_c3_cancel_public_events + ox_c4_restrictions_on_gatherings + ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement + ox_c8_international_travel_controls) / 7,
          policy_population_index = policy_stringency_index * owid_population_density) %>% 
