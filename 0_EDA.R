@@ -789,7 +789,7 @@ pm_correlation_graph <- ggplot(pm_melted_corr_matrix, aes(Var1, Var2, fill = val
                        name="Pearson\nCorrelation") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - Policy Measures (+ Mobility)')
+  labs(x = '', y = '', title = 'Correlation Matrix Heatmap - Policy Measures')
 
 # custom features
 
@@ -883,7 +883,7 @@ print(combined_plot)
 
 # final dimensions ----
 
-# univariate (2513)
+# univariate (2175 x 2)
 observations_table <- data.frame(
   Country = c("China", "Japan", "France", "Iran", "Italy", "US", "Switzerland", "UK", "Netherlands", "Germany"),
   Observations = c(nrow(china), nrow(japan), nrow(france), nrow(iran), nrow(italy), nrow(us), nrow(switzerland), nrow(uk), nrow(netherlands), nrow(germany))
