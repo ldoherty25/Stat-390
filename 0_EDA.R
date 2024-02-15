@@ -533,40 +533,6 @@ bolivia <- bolivia %>%
   na.omit()
 
 
-## creating univariate dataset ----
-
-# creating storage list
-country_datasets <- list()
-
-# determining split ratio
-split_ratio <- 0.8
-
-# creating datasets for each country
-for (country_name in countries) {
-  country_data <- preprocessed_covid_multi %>%
-    filter(country == country_name, owid_new_deaths > 0) %>%
-    select(date, owid_new_deaths)
-  
-  # calculating index for splitting data
-  split_index <- floor(nrow(country_data) * split_ratio)
-  
-  # splitting into training and testing sets
-  train_data <- country_data[1:split_index, ]
-  test_data <- country_data[(split_index + 1):nrow(country_data), ]
-  
-  # storing datasets in list
-  country_datasets[[country_name]] <- list(train_data = train_data, test_data = test_data)
-  
-  # construct file names
-  train_file_name <- paste0(tolower(gsub("\\s+", "", country_name)), "_train.rda")
-  test_file_name <- paste0(tolower(gsub("\\s+", "", country_name)), "_test.rda")
-  
-  # saving
-  save(train_data, file = file.path("data/preprocessed/univariate/split/train", train_file_name))
-  save(test_data, file = file.path("data/preprocessed/univariate/split/test", test_file_name))
-}
-
-
 
 # working through multivariate dataset, ii ----
 
@@ -837,36 +803,36 @@ plot4 <- ggplot(preprocessed_covid_multi_imputed, aes(x = vulnerability_index_cf
 combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
 
 
-## feature selection ----
-
-preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
-  select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
-
-# training a random forest model
-rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
-
-# computing importance scores
-importance_scores <- importance(rf_model)
-
-# converting to data frame
-importance_df <- as.data.frame(importance_scores)
-
-# make sure there are no duplicate names
-names(importance_df) <- make.unique(names(importance_df))
-
-# incorporating variable name column
-importance_df$Variable <- rownames(importance_df)
-
-# melting to long format
-importance_long <- melt(importance_df, id.vars = "Variable")
-
-# producing plot
-importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +  # Flip the axes to make the plot horizontal
-  theme_minimal() +
-  labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
-  theme(plot.title = element_text(hjust = 0.5))
+# ## feature selection ----
+# 
+# preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
+#   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
+# 
+# # training a random forest model
+# rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
+# 
+# # computing importance scores
+# importance_scores <- importance(rf_model)
+# 
+# # converting to data frame
+# importance_df <- as.data.frame(importance_scores)
+# 
+# # make sure there are no duplicate names
+# names(importance_df) <- make.unique(names(importance_df))
+# 
+# # incorporating variable name column
+# importance_df$Variable <- rownames(importance_df)
+# 
+# # melting to long format
+# importance_long <- melt(importance_df, id.vars = "Variable")
+# 
+# # producing plot
+# importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
+#   geom_bar(stat = "identity") +
+#   coord_flip() +  # Flip the axes to make the plot horizontal
+#   theme_minimal() +
+#   labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
+#   theme(plot.title = element_text(hjust = 0.5))
 
 
 # final dimensions ----
@@ -895,4 +861,4 @@ save(colombia, file = "data/preprocessed/univariate/not_split/univariate_colombi
 save(mexico, file = "data/preprocessed/univariate/not_split/univariate_mexico.rda")
 save(bolivia, file = "data/preprocessed/univariate/not_split/univariate_bolivia.rda")
 save(peru, file = "data/preprocessed/univariate/not_split/univariate_peru.rda")
-save(importance, file = "visuals/importance.rda")
+# save(importance, file = "visuals/importance.rda")
