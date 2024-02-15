@@ -803,11 +803,25 @@ plot4 <- ggplot(preprocessed_covid_multi_imputed, aes(x = vulnerability_index_cf
 combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
 
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+## feature selection ----
+
+preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
+  select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
+
+
+>>>>>>> main
 # ## feature selection ----
 # 
 # preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
 #   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
+<<<<<<< HEAD
 # 
+=======
+#
+>>>>>>> main
 # # training a random forest model
 # rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
 # 
