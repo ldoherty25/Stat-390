@@ -545,6 +545,7 @@ split_ratio <- 0.8
 for (country_name in countries) {
   country_data <- preprocessed_covid_multi %>%
     filter(country == country_name, owid_new_deaths > 0) %>%
+    arrange(date) %>%
     select(date, owid_new_deaths)
   
   # calculating index for splitting data
@@ -554,8 +555,12 @@ for (country_name in countries) {
   train_data <- country_data[1:split_index, ]
   test_data <- country_data[(split_index + 1):nrow(country_data), ]
   
-  # storing datasets in list
-  country_datasets[[country_name]] <- list(train_data = train_data, test_data = test_data)
+  # converting to time series
+  train_ts <- ts(train_data$owid_new_deaths, frequency = 7)
+  test_ts <- ts(test_data$owid_new_deaths, frequency = 7)
+  
+  # storing time series in list
+  country_datasets[[country_name]] <- list(train_ts = train_ts, test_ts = test_ts)
   
   # writing csv files
   write.csv(train_data, file.path("data/preprocessed/univariate/split/train", paste0(tolower(gsub("\\s+", "", country_name)), "_train.csv")), row.names = FALSE)
@@ -838,31 +843,31 @@ combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
 
-# training a random forest model
-rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
-
-# computing importance scores
-importance_scores <- importance(rf_model)
-
-# converting to data frame
-importance_df <- as.data.frame(importance_scores)
-
-# make sure there are no duplicate names
-names(importance_df) <- make.unique(names(importance_df))
-
-# incorporating variable name column
-importance_df$Variable <- rownames(importance_df)
-
-# melting to long format
-importance_long <- melt(importance_df, id.vars = "Variable")
-
-# producing plot
-importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +  # Flip the axes to make the plot horizontal
-  theme_minimal() +
-  labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
-  theme(plot.title = element_text(hjust = 0.5))
+# # training a random forest model
+# rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
+# 
+# # computing importance scores
+# importance_scores <- importance(rf_model)
+# 
+# # converting to data frame
+# importance_df <- as.data.frame(importance_scores)
+# 
+# # make sure there are no duplicate names
+# names(importance_df) <- make.unique(names(importance_df))
+# 
+# # incorporating variable name column
+# importance_df$Variable <- rownames(importance_df)
+# 
+# # melting to long format
+# importance_long <- melt(importance_df, id.vars = "Variable")
+# 
+# # producing plot
+# importance <- ggplot(importance_long, aes(x = reorder(Variable, value), y = value)) +
+#   geom_bar(stat = "identity") +
+#   coord_flip() +  # Flip the axes to make the plot horizontal
+#   theme_minimal() +
+#   labs(x = "Feature", y = "Importance", title = "Feature Importance from Random Forest Model") +
+#   theme(plot.title = element_text(hjust = 0.5))
 
 
 # final dimensions ----
@@ -891,4 +896,4 @@ save(colombia, file = "data/preprocessed/univariate/not_split/univariate_colombi
 save(mexico, file = "data/preprocessed/univariate/not_split/univariate_mexico.rda")
 save(bolivia, file = "data/preprocessed/univariate/not_split/univariate_bolivia.rda")
 save(peru, file = "data/preprocessed/univariate/not_split/univariate_peru.rda")
-save(importance, file = "visuals/importance.rda")
+# save(importance, file = "visuals/importance.rda")
