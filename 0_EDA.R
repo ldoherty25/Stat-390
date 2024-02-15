@@ -533,41 +533,6 @@ bolivia <- bolivia %>%
   na.omit()
 
 
-## creating univariate dataset ----
-
-# creating storage list
-country_datasets <- list()
-
-# determining split ratio
-split_ratio <- 0.8
-
-# creating datasets for each country
-for (country_name in countries) {
-  country_data <- preprocessed_covid_multi %>%
-    filter(country == country_name, owid_new_deaths > 0) %>%
-    arrange(date) %>%
-    select(date, owid_new_deaths)
-  
-  # calculating index for splitting data
-  split_index <- floor(nrow(country_data) * split_ratio)
-  
-  # splitting into training and testing sets
-  train_data <- country_data[1:split_index, ]
-  test_data <- country_data[(split_index + 1):nrow(country_data), ]
-  
-  # converting to time series
-  train_ts <- ts(train_data$owid_new_deaths, frequency = 7)
-  test_ts <- ts(test_data$owid_new_deaths, frequency = 7)
-  
-  # storing time series in list
-  country_datasets[[country_name]] <- list(train_ts = train_ts, test_ts = test_ts)
-  
-  # writing csv files
-  write.csv(train_data, file.path("data/preprocessed/univariate/split/train", paste0(tolower(gsub("\\s+", "", country_name)), "_train.csv")), row.names = FALSE)
-  write.csv(test_data, file.path("data/preprocessed/univariate/split/test", paste0(tolower(gsub("\\s+", "", country_name)), "_test.csv")), row.names = FALSE)
-}
-
-
 
 # working through multivariate dataset, ii ----
 
@@ -838,11 +803,18 @@ plot4 <- ggplot(preprocessed_covid_multi_imputed, aes(x = vulnerability_index_cf
 combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
 
 
+<<<<<<< HEAD
 ## feature selection ----
 
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
 
+
+# ## feature selection ----
+# 
+# preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
+#   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
+#
 # # training a random forest model
 # rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
 # 
