@@ -557,9 +557,13 @@ for (country_name in countries) {
   # storing datasets in list
   country_datasets[[country_name]] <- list(train_data = train_data, test_data = test_data)
   
-  # writing csv files
-  write.csv(train_data, file.path("data/preprocessed/univariate/split/train", paste0(tolower(gsub("\\s+", "", country_name)), "_train.csv")), row.names = FALSE)
-  write.csv(test_data, file.path("data/preprocessed/univariate/split/test", paste0(tolower(gsub("\\s+", "", country_name)), "_test.csv")), row.names = FALSE)
+  # construct file names
+  train_file_name <- paste0(tolower(gsub("\\s+", "", country_name)), "_train.rda")
+  test_file_name <- paste0(tolower(gsub("\\s+", "", country_name)), "_test.rda")
+  
+  # saving
+  save(train_data, file = file.path("data/preprocessed/univariate/split/train", train_file_name))
+  save(test_data, file = file.path("data/preprocessed/univariate/split/test", test_file_name))
 }
 
 
