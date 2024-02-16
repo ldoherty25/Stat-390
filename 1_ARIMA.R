@@ -20,6 +20,7 @@ library(patchwork)
 library(seastests)
 library(gridExtra)
 library(timetk)
+library(e1071)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -1043,6 +1044,114 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
+# # finding best parameters per country ----
+# 
+# ## load data ----
+# load("data/preprocessed/univariate/not_split/us.rda")
+# 
+# 
+# ## splitting into training and testing sets ----
+# 
+# # calculating the number of dates for time_series_cv parameters
+# total_days <- nrow(us)
+# train_days <- ceiling(0.9 * total_days)
+# test_days <- ceiling((total_days - train_days))
+# 
+# # creating folds
+# us_folds <- time_series_cv(
+#   us,
+#   date_var = date,
+#   initial = train_days,
+#   assess = test_days,
+#   fold = 1,
+#   slice_limit = 1)
+# 
+# # filtering by slice
+# us_folds %>% tk_time_series_cv_plan() %>%
+#   filter(.id == "Slice2") %>%
+#   nrow()
+# 
+# # defining grid of parameter values to search over
+# orders <- c(0, 1, 2)
+# seasonals <- list(order = c(0, 1), period = 7)
+# 
+# # initializing parameters
+# min_rmse <- Inf
+# best_order <- NULL
+# best_seasonal <- NULL
+# 
+# # iterating over all combinations
+# for (order_i in c(0, 1)) {
+#   for (order_ii in c(0, 1)) {
+#     for (order_iii in c(0, 1)) {
+#       for (seasonal_order_i in c(0, 1)) {
+#         for (seasonal_order_ii in c(0, 1)) {
+#           for (seasonal_order_iii in c(0, 1)) {
+#             for (seasonal_period in 1:14) {
+#               seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
+#                                period = seasonal_period)
+# 
+#               # initializing vectors to store RMSE
+#               rmse_results <- numeric(length(us_folds$splits))
+# 
+#               # fitting to model and calculating metrics
+#               for (i in seq_along(us_folds$splits)) {
+#                 fold <- us_folds$splits[[i]]
+#                 train_data <- fold$data[fold$in_id, ]
+#                 test_data <- fold$data[fold$out_id, ]
+# 
+#                 # fitting to ARIMA
+#                 arima_model <- tryCatch({
+#                   arima(train_data$owid_new_deaths,
+#                         order = c(order_i, order_ii, order_iii), # Use dynamic order
+#                         seasonal = seasonal)
+#                 }, error = function(e) {
+#                   NULL
+#                 })
+# 
+#                 if (!is.null(arima_model)) {
+# 
+#                   # forecasting with ARIMA
+#                   forecast_values <- forecast(arima_model, h = nrow(test_data))
+# 
+#                   # enforcing non-negativity on forecasted values
+#                   forecast_values$mean <- pmax(forecast_values$mean, 0)
+# 
+#                   # computing RMSE
+#                   errors <- forecast_values$mean - test_data$owid_new_deaths
+#                   rmse_results[i] <- sqrt(mean(errors^2))
+#                 } else {
+# 
+#                   # setting RMSE to Inf if model fails
+#                   rmse_results[i] <- Inf
+#                 }
+#               }
+# 
+#               # calculating average folds RMSE
+#               avg_rmse <- mean(rmse_results, na.rm = TRUE)
+# 
+#               # checking if current combo results in lower RMSE
+#               if (avg_rmse < min_rmse) {
+#                 min_rmse <- avg_rmse
+#                 best_order <- c(order_i, order_ii, order_iii)
+#                 best_seasonal <- seasonal
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+# 
+# # printing lowest RMSE and best parameters
+# cat("Minimum RMSE:", min_rmse, "\n")
+# cat("Best order:", best_order, "\n")
+# cat("Best seasonal:", best_seasonal$order, "\n")
+# cat("Best seasonal period:", best_seasonal$period, "\n")
+
+
+
 # producing training and testing separate plots ----
 
 
@@ -1190,7 +1299,8 @@ metrics_list <- list()
 # calculating metrics for each country
 for (country in c("bolivia", "brazil", "colombia", "iran",
                   "mexico", "peru", "russia", "saudi", "turkey", "us")) {
-  # Simulating the calculation of metrics
+
+  # simulating the calculation of metrics
   rmse <- mean(get(paste0(country, "_rmse_results")))
   mae <- mean(get(paste0(country, "_mae_results")))
   mse <- mean(get(paste0(country, "_mse_results")))
@@ -1244,109 +1354,120 @@ print(all_metrics_df %>% DT::datatable())
 
 
 
-# # finding best parameters per country ----
-# 
-# ## load data ----
-# load("data/preprocessed/univariate/not_split/us.rda")
-# 
-# 
-# ## splitting into training and testing sets ----
-# 
-# # calculating the number of dates for time_series_cv parameters
-# total_days <- nrow(us)
-# train_days <- ceiling(0.9 * total_days)
-# test_days <- ceiling((total_days - train_days))
-# 
-# # creating folds
-# us_folds <- time_series_cv(
-#   us,
-#   date_var = date,
-#   initial = train_days,
-#   assess = test_days,
-#   fold = 1,
-#   slice_limit = 1)
-# 
-# # filtering by slice
-# us_folds %>% tk_time_series_cv_plan() %>%
-#   filter(.id == "Slice2") %>%
-#   nrow()
-# 
-# # defining grid of parameter values to search over
-# orders <- c(0, 1, 2)
-# seasonals <- list(order = c(0, 1), period = 7)
-# 
-# # initializing parameters
-# min_rmse <- Inf
-# best_order <- NULL
-# best_seasonal <- NULL
-# 
-# # iterating over all combinations
-# for (order_i in c(0, 1)) {
-#   for (order_ii in c(0, 1)) {
-#     for (order_iii in c(0, 1)) {
-#       for (seasonal_order_i in c(0, 1)) {
-#         for (seasonal_order_ii in c(0, 1)) {
-#           for (seasonal_order_iii in c(0, 1)) {
-#             for (seasonal_period in 1:14) {
-#               seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
-#                                period = seasonal_period)
-# 
-#               # initializing vectors to store RMSE
-#               rmse_results <- numeric(length(us_folds$splits))
-# 
-#               # fitting to model and calculating metrics
-#               for (i in seq_along(us_folds$splits)) {
-#                 fold <- us_folds$splits[[i]]
-#                 train_data <- fold$data[fold$in_id, ]
-#                 test_data <- fold$data[fold$out_id, ]
-# 
-#                 # fitting to ARIMA
-#                 arima_model <- tryCatch({
-#                   arima(train_data$owid_new_deaths,
-#                         order = c(order_i, order_ii, order_iii), # Use dynamic order
-#                         seasonal = seasonal)
-#                 }, error = function(e) {
-#                   NULL
-#                 })
-# 
-#                 if (!is.null(arima_model)) {
-# 
-#                   # forecasting with ARIMA
-#                   forecast_values <- forecast(arima_model, h = nrow(test_data))
-# 
-#                   # enforcing non-negativity on forecasted values
-#                   forecast_values$mean <- pmax(forecast_values$mean, 0)
-# 
-#                   # computing RMSE
-#                   errors <- forecast_values$mean - test_data$owid_new_deaths
-#                   rmse_results[i] <- sqrt(mean(errors^2))
-#                 } else {
-# 
-#                   # setting RMSE to Inf if model fails
-#                   rmse_results[i] <- Inf
-#                 }
-#               }
-# 
-#               # calculating average folds RMSE
-#               avg_rmse <- mean(rmse_results, na.rm = TRUE)
-# 
-#               # checking if current combo results in lower RMSE
-#               if (avg_rmse < min_rmse) {
-#                 min_rmse <- avg_rmse
-#                 best_order <- c(order_i, order_ii, order_iii)
-#                 best_seasonal <- seasonal
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
-# 
-# # printing lowest RMSE and best parameters
-# cat("Minimum RMSE:", min_rmse, "\n")
-# cat("Best order:", best_order, "\n")
-# cat("Best seasonal:", best_seasonal$order, "\n")
-# cat("Best seasonal period:", best_seasonal$period, "\n")
+# creating a metrics list for each country (training included) ----
 
+# defining a list
+train_metrics_list <- list()
+
+# specifying countries
+countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
+
+# looping to calculate training metrics
+for (country in countries) {
+  # Get the actual and fitted values
+  actual_values <- get(paste0(country, "_train_data"))$owid_new_deaths
+  fitted_values <- get(paste0(country, "_fitted_values"))
+  
+  # calculating errors
+  errors <- actual_values - fitted_values
+  
+  # calculating metrics
+  rmse <- sqrt(mean(errors^2))
+  mae <- mean(abs(errors))
+  mse <- mean(errors^2)
+  
+  # storing metrics in list
+  train_metrics_list[[paste0(country, "_train_rmse")]] <- rmse
+  train_metrics_list[[paste0(country, "_train_mae")]] <- mae
+  train_metrics_list[[paste0(country, "_train_mse")]] <- mse
+}
+
+# creating a list to store comparison results
+performance_comparison <- list()
+
+# looping through each country
+for (country in countries) {
+  
+  # retrieving average training metrics
+  avg_train_rmse <- round(train_metrics_list[[paste0(country, "_train_rmse")]], 3)
+  avg_train_mae <- round(train_metrics_list[[paste0(country, "_train_mae")]], 3)
+  avg_train_mse <- round(train_metrics_list[[paste0(country, "_train_mse")]], 3)
+  
+  # retrievingaverage testing metrics
+  avg_test_rmse <- round(mean(get(paste0(country, "_rmse_results"))), 3)
+  avg_test_mae <- round(mean(get(paste0(country, "_mae_results"))), 3)
+  avg_test_mse <- round(mean(get(paste0(country, "_mse_results"))), 3)
+  
+  # calculating differences and rounding
+  rmse_diff <- round(avg_test_rmse - avg_train_rmse, 3)
+  mae_diff <- round(avg_test_mae - avg_train_mae, 3)
+  mse_diff <- round(avg_test_mse - avg_train_mse, 3)
+  
+  # diagnosing based on differences
+  diagnosis <- ifelse(rmse_diff > 0.2 & mae_diff > 0.2 & mse_diff > 0.2, "Possible Overfitting",
+                      ifelse(avg_train_rmse > 1 & avg_test_rmse > 1 & avg_train_mae > 1 & avg_test_mae > 1,
+                             "Possible Underfitting", "Appropriate Fit"))
+  
+  # formatting country names
+  formatted_country <- ifelse(country == "us", "US", tools::toTitleCase(country))
+  
+  # combining into data frame
+  comparison_df <- data.frame(
+    Country = formatted_country,
+    Train_RMSE = avg_train_rmse,
+    Test_RMSE = avg_test_rmse,
+    RMSE_Difference = rmse_diff,
+    Train_MAE = avg_train_mae,
+    Test_MAE = avg_test_mae,
+    MAE_Difference = mae_diff,
+    Train_MSE = avg_train_mse,
+    Test_MSE = avg_test_mse,
+    MSE_Difference = mse_diff,
+    Diagnosis = diagnosis
+  )
+  
+  # adding to list
+  performance_comparison[[country]] <- comparison_df
+}
+
+# combining all country comparisons
+all_comparisons_df <- do.call(rbind, performance_comparison)
+
+# rounding
+numeric_columns <- sapply(all_comparisons_df, is.numeric)
+all_comparisons_df[, numeric_columns] <- round(all_comparisons_df[, numeric_columns], 3)
+
+# printing comparison
+print(all_comparisons_df %>% DT::datatable(options = list(pageLength = 10)))
+
+
+
+# determining whether log transformation is required ----
+
+# placeholder for skewedness
+skewness_values <- list()
+transformation_advice <- list()
+
+countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
+
+for (country in countries) {
+  
+  # replacing these placeholders with variable names
+  forecast_values <- get(paste0(country, "_forecast_values"))$mean
+  actual_values <- get(paste0(country, "_test_data"))$owid_new_deaths
+  
+  # calculating residuals
+  residuals <- forecast_values - actual_values
+  
+  # calculating skewness
+  skewness_val <- skewness(residuals)
+  skewness_values[[country]] <- skewness_val
+  
+  # advice for transformation based on skewness
+  advice <- ifelse(abs(skewness_val) > 1, "Consider Log Transformation", "No Transformation Needed")
+  transformation_advice[[country]] <- advice
+}
+
+# printing values and advice
+print(skewness_values)
+print(transformation_advice)
