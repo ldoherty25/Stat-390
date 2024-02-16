@@ -490,47 +490,47 @@ for (country_name in countries) {
   cat("ADF Test p-value:", adf_test_result_diff$p.value, "\n")
 }
 
-# differencing countries manually
-
-brazil <- brazil %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-turkey <- turkey %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-russia <- russia %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-us <- us %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-iran <- iran %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>%
-  na.omit()
-
-saudi <- saudi %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-colombia <- colombia %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-mexico <- mexico %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-peru <- peru %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
-
-bolivia <- bolivia %>%
-  mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
-  na.omit()
+# # differencing countries manually
+# 
+# brazil <- brazil %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# turkey <- turkey %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# russia <- russia %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# us <- us %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# iran <- iran %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>%
+#   na.omit()
+# 
+# saudi <- saudi %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# colombia <- colombia %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# mexico <- mexico %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# peru <- peru %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
+# 
+# bolivia <- bolivia %>%
+#   mutate(owid_new_deaths = c(NA, diff(owid_new_deaths, differences = 1))) %>% 
+#   na.omit()
 
 
 
@@ -807,14 +807,6 @@ combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
 
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
   select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
-
-
-
-## feature selection ----
-
-preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-  select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
-
 
 # # training a random forest model
 # rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
