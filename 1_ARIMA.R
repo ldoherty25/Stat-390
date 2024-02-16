@@ -61,7 +61,7 @@ bolivia_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 bolivia_rmse_results <- numeric(length(bolivia_folds$splits))
@@ -162,7 +162,7 @@ brazil_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 brazil_rmse_results <- numeric(length(brazil_folds$splits))
@@ -263,7 +263,7 @@ colombia_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 colombia_rmse_results <- numeric(length(colombia_folds$splits))
@@ -364,7 +364,7 @@ iran_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 iran_rmse_results <- numeric(length(iran_folds$splits))
@@ -465,7 +465,7 @@ mexico_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 mexico_rmse_results <- numeric(length(mexico_folds$splits))
@@ -566,7 +566,7 @@ peru_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 peru_rmse_results <- numeric(length(peru_folds$splits))
@@ -667,7 +667,7 @@ russia_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 russia_rmse_results <- numeric(length(russia_folds$splits))
@@ -769,7 +769,7 @@ saudi_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 saudi_rmse_results <- numeric(length(saudi_folds$splits))
@@ -870,7 +870,7 @@ turkey_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 turkey_rmse_results <- numeric(length(turkey_folds$splits))
@@ -971,7 +971,7 @@ us_folds %>% tk_time_series_cv_plan() %>%
   nrow()
 
 
-# applying ARIMA model ----
+## applying ARIMA model ----
 
 # creating metrics vector
 us_rmse_results <- numeric(length(us_folds$splits))
@@ -1043,6 +1043,207 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
+# producing training and testing separate plots ----
+
+
+## bolivia ----
+
+# producing fitted training set plot
+plot(bolivia_train_data$date, bolivia_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Bolivia", "Training Set"))
+lines(bolivia_train_data$date, bolivia_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(bolivia_test_data$date, bolivia_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Bolivia", "Test Set"))
+lines(bolivia_test_data$date, bolivia_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## brazil ----
+
+# producing fitted training set plot
+plot(brazil_train_data$date, brazil_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Brazil", "Training Set"))
+lines(brazil_train_data$date, brazil_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(brazil_test_data$date, brazil_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Brazil", "Test Set"))
+lines(brazil_test_data$date, brazil_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## iran ----
+
+# producing fitted training set plot
+plot(iran_train_data$date, iran_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Iran", "Training Set"))
+lines(iran_train_data$date, iran_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(iran_test_data$date, iran_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Iran", "Test Set"))
+lines(iran_test_data$date, iran_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## mexico ----
+
+# producing fitted training set plot
+plot(mexico_train_data$date, mexico_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Mexico", "Training Set"))
+lines(mexico_train_data$date, mexico_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(mexico_test_data$date, mexico_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Mexico", "Test Set"))
+lines(mexico_test_data$date, mexico_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## peru ----
+
+# producing fitted training set plot
+plot(peru_train_data$date, peru_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Peru", "Training Set"))
+lines(peru_train_data$date, peru_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(peru_test_data$date, peru_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Peru", "Test Set"))
+lines(peru_test_data$date, peru_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## russia ----
+
+# producing fitted training set plot
+plot(russia_train_data$date, russia_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Russia", "Training Set"))
+lines(russia_train_data$date, russia_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(russia_test_data$date, russia_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Russia", "Test Set"))
+lines(russia_test_data$date, russia_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## saudi ----
+
+# producing fitted training set plot
+plot(saudi_train_data$date, saudi_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Saudi", "Training Set"))
+lines(saudi_train_data$date, saudi_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(saudi_test_data$date, saudi_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Saudi", "Test Set"))
+lines(saudi_test_data$date, saudi_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## turkey ----
+
+# producing fitted training set plot
+plot(turkey_train_data$date, turkey_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Turkey", "Training Set"))
+lines(turkey_train_data$date, turkey_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(turkey_test_data$date, turkey_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("Turkey", "Test Set"))
+lines(turkey_test_data$date, turkey_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+## us ----
+
+# producing fitted training set plot
+plot(us_train_data$date, us_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("U.S.", "Training Set"))
+lines(us_train_data$date, us_fitted_values, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+# producing forecasting plot
+plot(us_test_data$date, us_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
+     ylab = "New Deaths", main = paste("U.S.", "Test Set"))
+lines(us_test_data$date, us_forecast_values$mean, col = "red", lty = 2)
+legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+
+
+
+# visualizing all metrics ----
+
+# defining a list to hold each country's metrics
+metrics_list <- list()
+
+# calculating metrics for each country
+for (country in c("bolivia", "brazil", "colombia", "iran",
+                  "mexico", "peru", "russia", "saudi", "turkey", "us")) {
+  # Simulating the calculation of metrics
+  rmse <- mean(get(paste0(country, "_rmse_results")))
+  mae <- mean(get(paste0(country, "_mae_results")))
+  mse <- mean(get(paste0(country, "_mse_results")))
+  mape <- mean(get(paste0(country, "_mape_results")))
+  mase <- mean(get(paste0(country, "_mase_results")))
+  
+  # handling division by zero for MAPE
+  if (mape == Inf) {
+    mape <- NA
+  }
+  
+  # creating a data frame for the country's metrics
+  if (tolower(country) == "us") {
+    country_metrics_df <- data.frame(
+      Country = "US",
+      RMSE = rmse,
+      MAE = mae,
+      MSE = mse,
+      MAPE = mape,
+      MASE = mase
+    )
+  } else {
+    country_metrics_df <- data.frame(
+      Country = tools::toTitleCase(country),
+      RMSE = rmse,
+      MAE = mae,
+      MSE = mse,
+      MAPE = mape,
+      MASE = mase
+    )
+  }
+  
+  # adding data frame to list
+  metrics_list[[country]] <- country_metrics_df
+}
+
+# combining all the data frames into one
+all_metrics_df <- do.call(rbind, metrics_list)
+
+# rounding the metrics to 3 decimal points + handling NAs
+num_cols <- c("RMSE", "MAE", "MSE", "MAPE", "MASE")
+all_metrics_df[num_cols] <- lapply(all_metrics_df[num_cols], function(x) {
+  ifelse(is.na(x), NA, round(x, 3))
+})
+
+# sorting by RMSE
+all_metrics_df <- all_metrics_df[order(all_metrics_df$RMSE), ]
+
+# printing data frame
+print(all_metrics_df %>% DT::datatable())
+
+
+
 # # finding best parameters per country ----
 # 
 # ## load data ----
@@ -1066,8 +1267,8 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 #   slice_limit = 1)
 # 
 # # filtering by slice
-# us_folds %>% tk_time_series_cv_plan() %>% 
-#   filter(.id == "Slice2") %>% 
+# us_folds %>% tk_time_series_cv_plan() %>%
+#   filter(.id == "Slice2") %>%
 #   nrow()
 # 
 # # defining grid of parameter values to search over
@@ -1089,16 +1290,16 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 #             for (seasonal_period in 1:14) {
 #               seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
 #                                period = seasonal_period)
-#               
+# 
 #               # initializing vectors to store RMSE
 #               rmse_results <- numeric(length(us_folds$splits))
-#               
+# 
 #               # fitting to model and calculating metrics
 #               for (i in seq_along(us_folds$splits)) {
 #                 fold <- us_folds$splits[[i]]
 #                 train_data <- fold$data[fold$in_id, ]
 #                 test_data <- fold$data[fold$out_id, ]
-#                 
+# 
 #                 # fitting to ARIMA
 #                 arima_model <- tryCatch({
 #                   arima(train_data$owid_new_deaths,
@@ -1107,28 +1308,28 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 #                 }, error = function(e) {
 #                   NULL
 #                 })
-#                 
+# 
 #                 if (!is.null(arima_model)) {
-#                   
+# 
 #                   # forecasting with ARIMA
 #                   forecast_values <- forecast(arima_model, h = nrow(test_data))
-#                   
+# 
 #                   # enforcing non-negativity on forecasted values
 #                   forecast_values$mean <- pmax(forecast_values$mean, 0)
-#                   
+# 
 #                   # computing RMSE
 #                   errors <- forecast_values$mean - test_data$owid_new_deaths
 #                   rmse_results[i] <- sqrt(mean(errors^2))
 #                 } else {
-#                   
+# 
 #                   # setting RMSE to Inf if model fails
 #                   rmse_results[i] <- Inf
 #                 }
 #               }
-#               
+# 
 #               # calculating average folds RMSE
 #               avg_rmse <- mean(rmse_results, na.rm = TRUE)
-#               
+# 
 #               # checking if current combo results in lower RMSE
 #               if (avg_rmse < min_rmse) {
 #                 min_rmse <- avg_rmse
@@ -1148,3 +1349,4 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 # cat("Best order:", best_order, "\n")
 # cat("Best seasonal:", best_seasonal$order, "\n")
 # cat("Best seasonal period:", best_seasonal$period, "\n")
+
