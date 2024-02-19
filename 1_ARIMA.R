@@ -48,6 +48,8 @@ bolivia_train_days <- ceiling(0.9 * bolivia_total_days)
 bolivia_test_days <- ceiling((bolivia_total_days - bolivia_train_days))
 
 # creating folds
+
+
 bolivia_folds <- time_series_cv(
   bolivia,
   date_var = date,
