@@ -44,19 +44,21 @@ load("data/preprocessed/univariate/not_split/us.rda")
 bolivia <- bolivia%>%
   rename(ds = date, y = owid_new_deaths)
 #Splitting the data into training and testing sets
-bolivia_train_size <- nrow(bolivia)
-bolivia_train_set <- ceiling(0.9 * train_size)
-bolivia_test_set <- ceiling((train_size - train_set))
+bolivia_train_size <- floor(0.9 * nrow(bolivia))
+bolivia_train_set <- bolivia[1:bolivia_train_size, ]
+bolivia_test_set <- bolivia[(bolivia_train_size + 1):nrow(bolivia), ]
 
 #Creating time series folds in training data
 
 bolivia_folds <- time_series_cv(
   bolivia,
   date_var = ds,
-  initial = train_set,
-  assess = test_set,
+  initial = bolivia_train_set,
+  assess = bolivia_test_set,
   fold = 1,
   slice_limit = 1)
+
+#getting error: Error in Ops.data.frame(initial, assess) : ‘+’ only defined for equally-sized data frames
 
 #Filtering by slice
 bolivia_folds %>% tk_time_series_cv_plan() %>% 
@@ -79,8 +81,7 @@ fitting_process <- function(folds) {
                      yearly.seasonality = FALSE,
                      weekly.seasonality = "auto",
                      daily.seasonality = FALSE,
-                     fit = TRUE,
-                     mcmc.samples = 0)
+                     growth = "linear") #I don't think it's logistic because we'd have to put a cap on it but dbl check
   
     # Make predictions on the test data for the current fold
     future <- make_future_dataframe(model, periods = nrow(test_data))
@@ -119,8 +120,7 @@ bolivia_final_prophet <- prophet(bolivia_train_set,
                                  yearly.seasonality = FALSE,
                                  weekly.seasonality = "auto",
                                  daily.seasonality = FALSE,
-                                 fit = TRUE,
-                                 mcmc.samples = 0)
+                                 growth = "linear")
 #getting error: Error in as.environment(where) : invalid 'pos' argument
 
 # Make predictions on the test dataset
