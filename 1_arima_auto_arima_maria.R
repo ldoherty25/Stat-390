@@ -1,4 +1,4 @@
-## ARIMA
+## ARIMA and Auto-ARIMA
 
 # primary checks ----
 
@@ -1476,7 +1476,7 @@ print(transformation_advice)
 
 
 
-# auto-ARIMA
+# auto-ARIMA ----
 
 # automatic ARIMA modeling
 bolivia_auto_model <- auto.arima(bolivia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
@@ -1501,3 +1501,86 @@ summary(russia_auto_model)
 summary(saudi_auto_model)
 summary(turkey_auto_model)
 summary(us_auto_model)
+
+
+
+# displaying best models ----
+
+# defining helper function to calculate metrics
+calculate_metrics <- function(forecasted, actual, train) {
+  errors <- forecasted - actual
+  train_diff <- mean(abs(diff(train)))
+  list(
+    RMSE = sqrt(mean(errors^2)),
+    MAE = mean(abs(errors)),
+    MSE = mean(errors^2),
+    MAPE = mean(abs(errors / actual), na.rm = TRUE) * 100,
+    MASE = mean(abs(errors)) / train_diff
+  )
+}
+
+# extracting country names
+countries_data <- list(bolivia = bolivia, brazil = brazil, colombia = colombia, iran = iran, mexico = mexico, peru = peru, russia = russia, saudi = saudi, turkey = turkey, us = us)
+country_names <- names(countries_data)
+
+# initializing empty list to store metrics
+all_countries_metrics <- list()
+
+# looping through each country
+for (country_name in country_names) {
+  # Load country-specific data
+  country_data <- get(paste0(country_name, "_train_data"))
+  country_test_data <- get(paste0(country_name, "_test_data"))
+  
+  # ARIMA model
+  arima_model <- get(paste0(country_name, "_arima_model"))
+  
+  # Auto-ARIMA model
+  auto_model <- auto.arima(country_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+  
+  # forecasting using both models
+  arima_forecast <- forecast(arima_model, h = nrow(country_test_data))
+  auto_forecast <- forecast(auto_model, h = nrow(country_test_data))
+  
+  # calculating metrics for ARIMA
+  arima_metrics <- calculate_metrics(arima_forecast$mean, country_test_data$owid_new_deaths, country_data$owid_new_deaths)
+  
+  # calculating metrics for Auto-ARIMA
+  auto_metrics <- calculate_metrics(auto_forecast$mean, country_test_data$owid_new_deaths, country_data$owid_new_deaths)
+  
+  # combining metrics into a data frame
+  metrics_df <- data.frame(
+    Country = country_name,
+    Best_Model_RMSE = c("ARIMA", "Auto-ARIMA"),
+    RMSE = c(arima_metrics$RMSE, auto_metrics$RMSE),
+    MAE = c(arima_metrics$MAE, auto_metrics$MAE),
+    MSE = c(arima_metrics$MSE, auto_metrics$MSE),
+    MAPE = c(arima_metrics$MAPE, auto_metrics$MAPE),
+    MASE = c(arima_metrics$MASE, auto_metrics$MASE)
+  )
+  
+  # storing in list
+  all_countries_metrics[[country_name]] <- metrics_df
+}
+
+# combining all metrics into one data frame
+arima_final_metrics_df <- do.call(rbind, all_countries_metrics)
+
+arima_final_metrics_df <- arima_final_metrics_df %>%
+  group_by(Country) %>%
+  slice_min(order_by = RMSE, with_ties = FALSE) %>%
+  ungroup()
+
+arima_final_metrics_df <- arima_final_metrics_df %>%
+  mutate(across(c(RMSE, MAE, MSE, MAPE, MASE), round, 3))
+
+arima_final_metrics_df %>% 
+  DT::datatable()
+
+# printing final metrics table
+print(arima_final_metrics_df)
+
+
+
+# saving files ----
+save(arima_final_metrics_df, file = "data_frames/arima_final_metrics_df.rda")
