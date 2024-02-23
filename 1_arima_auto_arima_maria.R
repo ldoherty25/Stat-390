@@ -1510,11 +1510,15 @@ summary(us_auto_model)
 calculate_metrics <- function(forecasted, actual, train) {
   errors <- forecasted - actual
   train_diff <- mean(abs(diff(train)))
+  
+  # adding a small epsilon (division by zero in MAPE)
+  epsilon <- 1e-8
+  
   list(
     RMSE = sqrt(mean(errors^2)),
     MAE = mean(abs(errors)),
     MSE = mean(errors^2),
-    MAPE = mean(abs(errors / actual), na.rm = TRUE) * 100,
+    MAPE = mean(abs(errors / (actual + epsilon)), na.rm = TRUE) * 100,
     MASE = mean(abs(errors)) / train_diff
   )
 }
