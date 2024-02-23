@@ -1473,3 +1473,31 @@ for (country in countries) {
 # printing values and advice
 print(skewness_values)
 print(transformation_advice)
+
+
+
+# auto-ARIMA
+
+# automatic ARIMA modeling
+bolivia_auto_model <- auto.arima(bolivia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+brazil_auto_model <- auto.arima(brazil_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+colombia_auto_model <- auto.arima(colombia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+iran_auto_model <- auto.arima(iran_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+mexico_auto_model <- auto.arima(mexico_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+peru_auto_model <- auto.arima(peru_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+russia_auto_model <- auto.arima(russia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+saudi_auto_model <- auto.arima(saudi_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+turkey_auto_model <- auto.arima(turkey_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+us_auto_model <- auto.arima(us_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+# viewing selected model's details
+summary(bolivia_auto_model)
+summary(brazil_auto_model)
+summary(colombia_auto_model)
+summary(iran_auto_model)
+summary(mexico_auto_model)
+summary(peru_auto_model)
+summary(russia_auto_model)
+summary(saudi_auto_model)
+summary(turkey_auto_model)
+summary(us_auto_model)
