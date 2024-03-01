@@ -73,9 +73,9 @@ bolivia_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(bolivia_folds) {
+  for (i in seq_along(bolivia_folds$splits)) {
+    fold <- bolivia_folds$splits[[i]]
     bolivia_train_data = fold$data[fold$in_id, ]
     bolivia_test_data = fold$data[fold$out_id, ]
     
@@ -107,6 +107,23 @@ cat("RMSE:", mean(bolivia_metrics$RMSE))
 cat("MAE:", mean(bolivia_metrics$MAE))
 cat("MSE:", mean(bolivia_metrics$MSE))
 cat("MAPE:", mean(bolivia_metrics$MAPE))
+
+
+bolivia_all_dates <- c(bolivia_train_data$ds, bolivia_test_data$ds)
+bolivia_all_values <- c(bolivia_train_data$y, bolivia_test_data$y)
+
+bolivia_forecast_df <- data.frame(
+  date = bolivia_all_dates,
+  actual_deaths = bolivia_all_values,
+  forecasted_deaths = bolivia_forecast$yhat
+)
+
+bolivia_forecast_df_abs <- bolivia_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(bolivia_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -141,33 +158,33 @@ brazil_folds %>%
 
 # prophet model
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
-    brazil_train_data = fold$data[fold$in_id, ]
-    brazil_test_data = fold$data[fold$out_id, ]
+#fitting <- function(brazil_folds) {
+for (i in seq_along(brazil_folds$splits)) {
+  fold <- brazil_folds$splits[[i]]
+  brazil_train_data = fold$data[fold$in_id, ]
+  brazil_test_data = fold$data[fold$out_id, ]
     
-    all_metrics <- data.frame()
+    #all_metrics <- data.frame()
     
-    brazil_prophet <- prophet(brazil_train_data, 
+  brazil_prophet <- prophet(brazil_train_data, 
                                yearly.seasonality = FALSE,
                                weekly.seasonality = "auto",
                                daily.seasonality = FALSE,
                                growth = "linear")
     
-    brazil_future <- make_future_dataframe(brazil_prophet, periods = nrow(brazil_test_data))
-    brazil_forecast <- predict(brazil_prophet, brazil_future)
+  brazil_future <- make_future_dataframe(brazil_prophet, periods = nrow(brazil_test_data))
+  brazil_forecast <- predict(brazil_prophet, brazil_future)
     
-    metrics <- data.frame(
-      RMSE = sqrt(mean((brazil_test_data$y - brazil_forecast$yhat)^2)),
-      MAE = mean(abs(brazil_test_data$y - brazil_forecast$yhat)),
-      MSE = mean((brazil_test_data$y - brazil_forecast$yhat)^2),
-      MAPE = mean(abs((brazil_test_data$y - brazil_forecast$yhat) / brazil_test_data$y)) * 100)
-    all_metrics <- bind_rows(all_metrics, metrics)
+#  metrics <- data.frame(
+#    RMSE = sqrt(mean((brazil_test_data$y - brazil_forecast$yhat)^2)),
+#    MAE = mean(abs(brazil_test_data$y - brazil_forecast$yhat)),
+#    MSE = mean((brazil_test_data$y - brazil_forecast$yhat)^2),
+#    MAPE = mean(abs((brazil_test_data$y - brazil_forecast$yhat) / brazil_test_data$y)) * 100)
+#  all_metrics <- bind_rows(all_metrics, metrics)
     
-  }
-  return (all_metrics)
 }
+#  return (all_metrics)
+#}
 
 brazil_metrics <- fitting(brazil_folds)
 
@@ -186,6 +203,22 @@ cat("RMSE:", mean(brazil_metrics$RMSE))
 cat("MAE:", mean(brazil_metrics$MAE))
 cat("MSE:", mean(brazil_metrics$MSE))
 cat("MAPE:", mean(brazil_metrics$MAPE))
+
+brazil_all_dates <- c(brazil_train_data$ds, brazil_test_data$ds)
+brazil_all_values <- c(brazil_train_data$y, brazil_test_data$y)
+
+brazil_forecast_df <- data.frame(
+  date = brazil_all_dates,
+  actual_deaths = brazil_all_values,
+  forecasted_deaths = brazil_forecast$yhat
+)
+
+brazil_forecast_df_abs <- brazil_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(brazil_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 ##################################################################################################################################################################################################################################################################
 
@@ -219,9 +252,9 @@ colombia_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(colombia_folds) {
+  for (i in seq_along(colombia_folds$splits)) {
+    fold <- colombia_folds$splits[[i]]
     colombia_train_data = fold$data[fold$in_id, ]
     colombia_test_data = fold$data[fold$out_id, ]
     
@@ -253,6 +286,22 @@ cat("RMSE:", mean(colombia_metrics$RMSE))
 cat("MAE:", mean(colombia_metrics$MAE))
 cat("MSE:", mean(colombia_metrics$MSE))
 cat("MAPE:", mean(colombia_metrics$MAPE))
+
+colombia_all_dates <- c(colombia_train_data$ds, colombia_test_data$ds)
+colombia_all_values <- c(colombia_train_data$y, colombia_test_data$y)
+
+colombia_forecast_df <- data.frame(
+  date = colombia_all_dates,
+  actual_deaths = colombia_all_values,
+  forecasted_deaths = colombia_forecast$yhat
+)
+
+colombia_forecast_df_abs <- colombia_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(colombia_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -287,9 +336,9 @@ iran_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(iran_folds) {
+  for (i in seq_along(iran_folds$splits)) {
+    fold <- iran_folds$splits[[i]]
     iran_train_data = fold$data[fold$in_id, ]
     iran_test_data = fold$data[fold$out_id, ]
     
@@ -321,6 +370,22 @@ cat("RMSE:", mean(iran_metrics$RMSE))
 cat("MAE:", mean(iran_metrics$MAE))
 cat("MSE:", mean(iran_metrics$MSE))
 cat("MAPE:", mean(iran_metrics$MAPE))
+
+iran_all_dates <- c(iran_train_data$ds, iran_test_data$ds)
+iran_all_values <- c(iran_train_data$y, iran_test_data$y)
+
+iran_forecast_df <- data.frame(
+  date = iran_all_dates,
+  actual_deaths = iran_all_values,
+  forecasted_deaths = iran_forecast$yhat
+)
+
+iran_forecast_df_abs <- iran_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(iran_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -355,9 +420,9 @@ mexico_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(mexico_folds) {
+  for (i in seq_along(mexico_folds$splits)) {
+    fold <- mexico_folds$splits[[i]]
     mexico_train_data = fold$data[fold$in_id, ]
     mexico_test_data = fold$data[fold$out_id, ]
     
@@ -389,6 +454,22 @@ cat("RMSE:", mean(mexico_metrics$RMSE))
 cat("MAE:", mean(mexico_metrics$MAE))
 cat("MSE:", mean(mexico_metrics$MSE))
 cat("MAPE:", mean(mexico_metrics$MAPE))
+
+mexico_all_dates <- c(mexico_train_data$ds, mexico_test_data$ds)
+mexico_all_values <- c(mexico_train_data$y, mexico_test_data$y)
+
+mexico_forecast_df <- data.frame(
+  date = mexico_all_dates,
+  actual_deaths = mexico_all_values,
+  forecasted_deaths = mexico_forecast$yhat
+)
+
+mexico_forecast_df_abs <- mexico_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(mexico_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -423,9 +504,9 @@ peru_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(peru_folds) {
+  for (i in seq_along(peru_folds$splits)) {
+    fold <- peru_folds$splits[[i]]
     peru_train_data = fold$data[fold$in_id, ]
     peru_test_data = fold$data[fold$out_id, ]
     
@@ -457,6 +538,22 @@ cat("RMSE:", mean(peru_metrics$RMSE))
 cat("MAE:", mean(peru_metrics$MAE))
 cat("MSE:", mean(peru_metrics$MSE))
 cat("MAPE:", mean(peru_metrics$MAPE))
+
+peru_all_dates <- c(peru_train_data$ds, peru_test_data$ds)
+peru_all_values <- c(peru_train_data$y, peru_test_data$y)
+
+peru_forecast_df <- data.frame(
+  date = peru_all_dates,
+  actual_deaths = peru_all_values,
+  forecasted_deaths = peru_forecast$yhat
+)
+
+peru_forecast_df_abs <- peru_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(peru_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -490,9 +587,9 @@ russia_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(russia_folds) {
+  for (i in seq_along(russia_folds$splits)) {
+    fold <- russia_folds$splits[[i]]
     russia_train_data = fold$data[fold$in_id, ]
     russia_test_data = fold$data[fold$out_id, ]
     
@@ -524,6 +621,22 @@ cat("RMSE:", mean(russia_metrics$RMSE))
 cat("MAE:", mean(russia_metrics$MAE))
 cat("MSE:", mean(russia_metrics$MSE))
 cat("MAPE:", mean(russia_metrics$MAPE))
+
+russia_all_dates <- c(russia_train_data$ds, russia_test_data$ds)
+russia_all_values <- c(russia_train_data$y, russia_test_data$y)
+
+russia_forecast_df <- data.frame(
+  date = russia_all_dates,
+  actual_deaths = russia_all_values,
+  forecasted_deaths = russia_forecast$yhat
+)
+
+russia_forecast_df_abs <- russia_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(russia_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 ##################################################################################################################################################################################################################################################################
 
@@ -557,9 +670,9 @@ saudi_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(saudi_folds) {
+  for (i in seq_along(saudi_folds$splits)) {
+    fold <- saudi_folds$splits[[i]]
     saudi_train_data = fold$data[fold$in_id, ]
     saudi_test_data = fold$data[fold$out_id, ]
     
@@ -591,6 +704,22 @@ cat("RMSE:", mean(saudi_metrics$RMSE))
 cat("MAE:", mean(saudi_metrics$MAE))
 cat("MSE:", mean(saudi_metrics$MSE))
 cat("MAPE:", mean(saudi_metrics$MAPE))
+
+saudi_all_dates <- c(saudi_train_data$ds, saudi_test_data$ds)
+saudi_all_values <- c(saudi_train_data$y, saudi_test_data$y)
+
+saudi_forecast_df <- data.frame(
+  date = saudi_all_dates,
+  actual_deaths = saudi_all_values,
+  forecasted_deaths = saudi_forecast$yhat
+)
+
+saudi_forecast_df_abs <- saudi_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(saudi_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -624,9 +753,9 @@ turkey_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(turkey_folds) {
+  for (i in seq_along(turkey_folds$splits)) {
+    fold <- turkey_folds$splits[[i]]
     turkey_train_data = fold$data[fold$in_id, ]
     turkey_test_data = fold$data[fold$out_id, ]
     
@@ -658,6 +787,22 @@ cat("RMSE:", mean(turkey_metrics$RMSE))
 cat("MAE:", mean(turkey_metrics$MAE))
 cat("MSE:", mean(turkey_metrics$MSE))
 cat("MAPE:", mean(turkey_metrics$MAPE))
+
+turkey_all_dates <- c(turkey_train_data$ds, turkey_test_data$ds)
+turkey_all_values <- c(turkey_train_data$y, turkey_test_data$y)
+
+turkey_forecast_df <- data.frame(
+  date = turkey_all_dates,
+  actual_deaths = turkey_all_values,
+  forecasted_deaths = turkey_forecast$yhat
+)
+
+turkey_forecast_df_abs <- turkey_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(turkey_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
 
 
 ##################################################################################################################################################################################################################################################################
@@ -691,9 +836,9 @@ us_folds %>%
 
 # prophet model fit
 
-fitting <- function(folds) {
-  for (i in seq_along(folds$splits)) {
-    fold <- folds$splits[[i]]
+fitting <- function(us_folds) {
+  for (i in seq_along(us_folds$splits)) {
+    fold <- us_folds$splits[[i]]
     us_train_data = fold$data[fold$in_id, ]
     us_test_data = fold$data[fold$out_id, ]
     
@@ -725,5 +870,23 @@ cat("RMSE:", mean(us_metrics$RMSE))
 cat("MAE:", mean(us_metrics$MAE))
 cat("MSE:", mean(us_metrics$MSE))
 cat("MAPE:", mean(us_metrics$MAPE))
+
+
+us_all_dates <- c(us_train_data$ds, us_test_data$ds)
+us_all_values <- c(us_train_data$y, us_test_data$y)
+
+us_forecast_df <- data.frame(
+  date = us_all_dates,
+  actual_deaths = us_all_values,
+  forecasted_deaths = us_forecast$yhat
+)
+
+us_forecast_df_abs <- us_forecast_df %>% 
+  mutate(forecasted_deaths = abs(forecasted_deaths))
+
+ggplot(us_forecast_df_abs, aes(date)) +
+  geom_line(aes(y = actual_deaths), color = "red") +
+  geom_line(aes(y = forecasted_deaths), color = "blue")
+
 
 ##################################################################################################################################################################################################################################################################
