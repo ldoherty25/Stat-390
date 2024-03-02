@@ -1530,7 +1530,8 @@ all_countries_metrics <- list()
 
 # looping through each country
 for (country_name in country_names) {
-  # Load country-specific data
+  
+  # load country-specific data
   country_data <- get(paste0(country_name, "_train_data"))
   country_test_data <- get(paste0(country_name, "_test_data"))
   
@@ -1582,7 +1583,10 @@ arima_final_metrics_df %>%
 # printing final metrics table
 print(arima_final_metrics_df)
 
+# removing row names
+row.names(arima_final_metrics_df) <- NULL
+
 
 
 # saving files ----
-save(arima_final_metrics_df, file = "data_frames/arima_final_metrics_df.rda")
+save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
