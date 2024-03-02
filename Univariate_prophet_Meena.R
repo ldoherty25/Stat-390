@@ -79,7 +79,7 @@ for (i in seq_along(bolivia_folds$splits)) {
   b_test_fold <- b_fold$data[b_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  b_model <- prophet(b_train_fold)
+  b_model <- prophet(b_train_fold, daily.seasonality = TRUE)
     
   # Make predictions on the test data
   bolivia_future <- make_future_dataframe(b_model, periods = nrow(b_test_fold))
@@ -105,7 +105,7 @@ for (i in seq_along(bolivia_folds$splits)) {
     MASE = mean(abs(diff(b_train_fold$y)) / mean(abs(bolivia_forecast$yhat[1:nrow(b_test_fold)] - b_test_fold$y))),
     MAPE = mean(abs((b_test_fold$y - bolivia_forecast$yhat[1:nrow(b_test_fold)]) / b_test_fold$y)) * 100)
   # Accumulate metrics
-  bolivia_all_metrics <- bind_rows(bolivia_all_metrics, bolivia_metrics)
+  bolivia_all_metrics <- bind_rows(bolivia_all_metrics, b_metrics)
 }
 bolivia_all_metrics
 
@@ -149,7 +149,7 @@ for (i in seq_along(brazil_folds$splits)) {
   brazil_test_fold <- brazil_fold$data[brazil_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  brazil_model <- prophet(brazil_train_fold)
+  brazil_model <- prophet(brazil_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   brazil_future <- make_future_dataframe(brazil_model, periods = nrow(brazil_test_fold))
@@ -209,7 +209,7 @@ for (i in seq_along(colombia_folds$splits)) {
   colombia_test_fold <- colombia_fold$data[colombia_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  colombia_model <- prophet(colombia_train_fold)
+  colombia_model <- prophet(colombia_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   colombia_future <- make_future_dataframe(colombia_model, periods = nrow(colombia_test_fold))
@@ -269,7 +269,7 @@ for (i in seq_along(iran_folds$splits)) {
   iran_test_fold <- iran_fold$data[iran_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  iran_model <- prophet(iran_train_fold)
+  iran_model <- prophet(iran_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   iran_future <- make_future_dataframe(iran_model, periods = nrow(iran_test_fold))
@@ -329,7 +329,7 @@ for (i in seq_along(mexico_folds$splits)) {
   mexico_test_fold <- mexico_fold$data[mexico_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  mexico_model <- prophet(mexico_train_fold)
+  mexico_model <- prophet(mexico_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   mexico_future <- make_future_dataframe(mexico_model, periods = nrow(mexico_test_fold))
@@ -389,7 +389,7 @@ for (i in seq_along(peru_folds$splits)) {
   peru_test_fold <- peru_fold$data[peru_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  peru_model <- prophet(peru_train_fold)
+  peru_model <- prophet(peru_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   peru_future <- make_future_dataframe(peru_model, periods = nrow(peru_test_fold))
@@ -449,7 +449,7 @@ for (i in seq_along(russia_folds$splits)) {
   russia_test_fold <- russia_fold$data[russia_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  russia_model <- prophet(russia_train_fold)
+  russia_model <- prophet(russia_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   russia_future <- make_future_dataframe(russia_model, periods = nrow(russia_test_fold))
@@ -509,7 +509,7 @@ for (i in seq_along(saudi_folds$splits)) {
   saudi_test_fold <- saudi_fold$data[saudi_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  saudi_model <- prophet(saudi_train_fold)
+  saudi_model <- prophet(saudi_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   saudi_future <- make_future_dataframe(saudi_model, periods = nrow(saudi_test_fold))
@@ -569,7 +569,7 @@ for (i in seq_along(turkey_folds$splits)) {
   turkey_test_fold <- turkey_fold$data[turkey_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  turkey_model <- prophet(turkey_train_fold)
+  turkey_model <- prophet(turkey_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   turkey_future <- make_future_dataframe(turkey_model, periods = nrow(turkey_test_fold))
@@ -629,7 +629,7 @@ for (i in seq_along(us_folds$splits)) {
   us_test_fold <- us_fold$data[us_fold$out_id, ]
   
   #Fitting the model on the training data for the current fold
-  us_model <- prophet(us_train_fold)
+  us_model <- prophet(us_train_fold, daily.seasonality = TRUE)
   
   # Make predictions on the test data
   us_future <- make_future_dataframe(us_model, periods = nrow(us_test_fold))
