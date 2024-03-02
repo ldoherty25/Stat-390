@@ -1562,6 +1562,9 @@ for (country_name in country_names) {
     MASE = c(arima_metrics$MASE, auto_metrics$MASE)
   )
   
+  # capitalizing country name in metrics_df
+  metrics_df$Country <- ifelse(tolower(metrics_df$Country) != "us", tools::toTitleCase(metrics_df$Country), "US")
+  
   # storing in list
   all_countries_metrics[[country_name]] <- metrics_df
 }

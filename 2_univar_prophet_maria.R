@@ -1166,7 +1166,7 @@ row.names(prophet_all_metrics_df) <- NULL
 # proper formatting
 prophet_all_metrics_df %>%
   DT::datatable(rownames = FALSE)
-  
+
 
 
 # saving files ----
