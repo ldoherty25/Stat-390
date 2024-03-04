@@ -1392,7 +1392,7 @@ us_boost_cv_MSE <- numeric(length = length(us_boost_cv_folds))
 us_boost_cv_MASE <- numeric(length = length(us_boost_cv_folds))
 us_boost_cv_MAPE <- numeric(length = length(us_boost_cv_folds))
 
-#empty vector for metrics of each fold
+#empty dataframe for metrics of each fold
 us_boost_curr_metrics <- data.frame(
   us_curr_fold = integer(length(us_boost_cv_folds)),
   RMSE = us_boost_cv_RMSE,
