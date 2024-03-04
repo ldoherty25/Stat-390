@@ -122,7 +122,7 @@ plot(bolivia_all_dates, bolivia_all_values, type = "l", col = "black", lwd = 1, 
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## brazil model
@@ -202,7 +202,7 @@ plot(brazil_all_dates, brazil_all_values, type = "l", col = "black", lwd = 1, xl
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## colombia model
@@ -282,7 +282,7 @@ plot(colombia_all_dates, colombia_all_values, type = "l", col = "black", lwd = 1
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## iran model
@@ -363,7 +363,7 @@ plot(iran_all_dates, iran_all_values, type = "l", col = "black", lwd = 1, xlab =
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## mexico model
@@ -444,7 +444,7 @@ plot(mexico_all_dates, mexico_all_values, type = "l", col = "black", lwd = 1, xl
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## Peru model
@@ -524,7 +524,7 @@ plot(peru_all_dates, peru_all_values, type = "l", col = "black", lwd = 1, xlab =
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## russia model
@@ -604,7 +604,7 @@ plot(russia_all_dates, russia_all_values, type = "l", col = "black", lwd = 1, xl
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## saudi model
@@ -685,7 +685,7 @@ plot(saudi_all_dates, saudi_all_values, type = "l", col = "black", lwd = 1, xlab
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## turkey model
@@ -766,7 +766,7 @@ plot(turkey_all_dates, turkey_all_values, type = "l", col = "black", lwd = 1, xl
          cex = 0.7)
 
 
-##########################################################################################################################################################################################################################################################
+########################################################################################################################################################################################################################################################
 
 
 ## us model
@@ -849,7 +849,221 @@ plot(us_all_dates, us_all_values, type = "l", col = "black", lwd = 1, xlab = "Da
          lwd = c(1, 2, 1),
          cex = 0.7)
 
-##########################################################################################################################################################################################################################################################
+################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+
+
+## Auto Arima
+
+
+# Bolivia
+
+bolivia_auto <- auto.arima(bolivia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(bolivia_auto)
+
+bolivia_auto_forecast <- forecast(bolivia_auto, h = nrow(bolivia_test_data))
+
+bolivia_auto_rmse <- sqrt(mean((bolivia_auto_forecast$mean - bolivia_test_data$owid_new_deaths)^2))
+bolivia_auto_mae <- mean(abs(bolivia_auto_forecast$mean - bolivia_test_data$owid_new_deaths))
+bolivia_auto_mse <- mean((bolivia_auto_forecast$mean - bolivia_test_data$owid_new_deaths)^2)
+bolivia_auto_mape <- mean(abs((bolivia_test_data$owid_new_deaths - bolivia_auto_forecast$mean) /
+                                bolivia_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", bolivia_auto_rmse, "\n")
+cat("MAE:", bolivia_auto_mae, "\n")
+cat("MSE:", bolivia_auto_mse, "\n")
+cat("MAPE:", bolivia_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Brazil
+
+brazil_auto <- auto.arima(brazil_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(brazil_auto)
+
+brazil_auto_forecast <- forecast(brazil_auto, h = nrow(brazil_test_data))
+
+brazil_auto_rmse <- sqrt(mean((brazil_auto_forecast$mean - brazil_test_data$owid_new_deaths)^2))
+brazil_auto_mae <- mean(abs(brazil_auto_forecast$mean - brazil_test_data$owid_new_deaths))
+brazil_auto_mse <- mean((brazil_auto_forecast$mean - brazil_test_data$owid_new_deaths)^2)
+brazil_auto_mape <- mean(abs((brazil_test_data$owid_new_deaths - brazil_auto_forecast$mean) /
+                                brazil_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", brazil_auto_rmse, "\n")
+cat("MAE:", brazil_auto_mae, "\n")
+cat("MSE:", brazil_auto_mse, "\n")
+cat("MAPE:", brazil_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Colombia
+
+colombia_auto <- auto.arima(colombia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(colombia_auto)
+
+colombia_auto_forecast <- forecast(colombia_auto, h = nrow(colombia_test_data))
+
+colombia_auto_rmse <- sqrt(mean((colombia_auto_forecast$mean - colombia_test_data$owid_new_deaths)^2))
+colombia_auto_mae <- mean(abs(colombia_auto_forecast$mean - colombia_test_data$owid_new_deaths))
+colombia_auto_mse <- mean((colombia_auto_forecast$mean - colombia_test_data$owid_new_deaths)^2)
+colombia_auto_mape <- mean(abs((colombia_test_data$owid_new_deaths - colombia_auto_forecast$mean) /
+                               colombia_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", colombia_auto_rmse, "\n")
+cat("MAE:", colombia_auto_mae, "\n")
+cat("MSE:", colombia_auto_mse, "\n")
+cat("MAPE:", colombia_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Iran
+
+iran_auto <- auto.arima(iran_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(iran_auto)
+
+iran_auto_forecast <- forecast(iran_auto, h = nrow(iran_test_data))
+
+iran_auto_rmse <- sqrt(mean((iran_auto_forecast$mean - iran_test_data$owid_new_deaths)^2))
+iran_auto_mae <- mean(abs(iran_auto_forecast$mean - iran_test_data$owid_new_deaths))
+iran_auto_mse <- mean((iran_auto_forecast$mean - iran_test_data$owid_new_deaths)^2)
+iran_auto_mape <- mean(abs((iran_test_data$owid_new_deaths - iran_auto_forecast$mean) /
+                               iran_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", iran_auto_rmse, "\n")
+cat("MAE:", iran_auto_mae, "\n")
+cat("MSE:", iran_auto_mse, "\n")
+cat("MAPE:", iran_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Mexico
+
+mexico_auto <- auto.arima(mexico_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(mexico_auto)
+
+mexico_auto_forecast <- forecast(mexico_auto, h = nrow(mexico_test_data))
+
+mexico_auto_rmse <- sqrt(mean((mexico_auto_forecast$mean - mexico_test_data$owid_new_deaths)^2))
+mexico_auto_mae <- mean(abs(mexico_auto_forecast$mean - mexico_test_data$owid_new_deaths))
+mexico_auto_mse <- mean((mexico_auto_forecast$mean - mexico_test_data$owid_new_deaths)^2)
+mexico_auto_mape <- mean(abs((mexico_test_data$owid_new_deaths - mexico_auto_forecast$mean) /
+                               mexico_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", mexico_auto_rmse, "\n")
+cat("MAE:", mexico_auto_mae, "\n")
+cat("MSE:", mexico_auto_mse, "\n")
+cat("MAPE:", mexico_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Peru
+
+peru_auto <- auto.arima(peru_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(peru_auto)
+
+peru_auto_forecast <- forecast(peru_auto, h = nrow(peru_test_data))
+
+peru_auto_rmse <- sqrt(mean((peru_auto_forecast$mean - peru_test_data$owid_new_deaths)^2))
+peru_auto_mae <- mean(abs(peru_auto_forecast$mean - peru_test_data$owid_new_deaths))
+peru_auto_mse <- mean((peru_auto_forecast$mean - peru_test_data$owid_new_deaths)^2)
+peru_auto_mape <- mean(abs((peru_test_data$owid_new_deaths - peru_auto_forecast$mean) /
+                               peru_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", peru_auto_rmse, "\n")
+cat("MAE:", peru_auto_mae, "\n")
+cat("MSE:", peru_auto_mse, "\n")
+cat("MAPE:", peru_auto_mape, "\n")
+
+#######################################################################################################################################################################################################################################################
+
+# Russia
+
+russia_auto <- auto.arima(russia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(russia_auto)
+
+russia_auto_forecast <- forecast(russia_auto, h = nrow(russia_test_data))
+
+russia_auto_rmse <- sqrt(mean((russia_auto_forecast$mean - russia_test_data$owid_new_deaths)^2))
+russia_auto_mae <- mean(abs(russia_auto_forecast$mean - russia_test_data$owid_new_deaths))
+russia_auto_mse <- mean((russia_auto_forecast$mean - russia_test_data$owid_new_deaths)^2)
+russia_auto_mape <- mean(abs((russia_test_data$owid_new_deaths - russia_auto_forecast$mean) /
+                               russia_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", russia_auto_rmse, "\n")
+cat("MAE:", russia_auto_mae, "\n")
+cat("MSE:", russia_auto_mse, "\n")
+cat("MAPE:", russia_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Saudi
+
+saudi_auto <- auto.arima(saudi_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(saudi_auto)
+
+saudi_auto_forecast <- forecast(saudi_auto, h = nrow(saudi_test_data))
+
+saudi_auto_rmse <- sqrt(mean((saudi_auto_forecast$mean - saudi_test_data$owid_new_deaths)^2))
+saudi_auto_mae <- mean(abs(saudi_auto_forecast$mean - saudi_test_data$owid_new_deaths))
+saudi_auto_mse <- mean((saudi_auto_forecast$mean - saudi_test_data$owid_new_deaths)^2)
+saudi_auto_mape <- mean(abs((saudi_test_data$owid_new_deaths - saudi_auto_forecast$mean) /
+                               saudi_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", saudi_auto_rmse, "\n")
+cat("MAE:", saudi_auto_mae, "\n")
+cat("MSE:", saudi_auto_mse, "\n")
+cat("MAPE:", saudi_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# Turkey
+
+turkey_auto <- auto.arima(turkey_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(turkey_auto)
+
+turkey_auto_forecast <- forecast(turkey_auto, h = nrow(turkey_test_data))
+
+turkey_auto_rmse <- sqrt(mean((turkey_auto_forecast$mean - turkey_test_data$owid_new_deaths)^2))
+turkey_auto_mae <- mean(abs(turkey_auto_forecast$mean - turkey_test_data$owid_new_deaths))
+turkey_auto_mse <- mean((turkey_auto_forecast$mean - turkey_test_data$owid_new_deaths)^2)
+turkey_auto_mape <- mean(abs((turkey_test_data$owid_new_deaths - turkey_auto_forecast$mean) /
+                               turkey_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", turkey_auto_rmse, "\n")
+cat("MAE:", turkey_auto_mae, "\n")
+cat("MSE:", turkey_auto_mse, "\n")
+cat("MAPE:", turkey_auto_mape, "\n")
+
+########################################################################################################################################################################################################################################################
+
+# US
+
+us_auto <- auto.arima(us_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+
+summary(us_auto)
+
+us_auto_forecast <- forecast(us_auto, h = nrow(us_test_data))
+
+us_auto_rmse <- sqrt(mean((us_auto_forecast$mean - us_test_data$owid_new_deaths)^2))
+us_auto_mae <- mean(abs(us_auto_forecast$mean - us_test_data$owid_new_deaths))
+us_auto_mse <- mean((us_auto_forecast$mean - us_test_data$owid_new_deaths)^2)
+us_auto_mape <- mean(abs((us_test_data$owid_new_deaths - us_auto_forecast$mean) /
+                               us_test_data$owid_new_deaths)) * 100
+
+cat("RMSE:", us_auto_rmse, "\n")
+cat("MAE:", us_auto_mae, "\n")
+cat("MSE:", us_auto_mse, "\n")
+cat("MAPE:", us_auto_mape, "\n")
+
+
 
 
 
