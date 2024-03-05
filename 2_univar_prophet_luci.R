@@ -175,34 +175,23 @@ for (i in seq_along(brazil_folds$splits)) {
   brazil_future <- make_future_dataframe(brazil_prophet, periods = nrow(brazil_test_data))
   brazil_forecast <- predict(brazil_prophet, brazil_future)
     
-#  metrics <- data.frame(
-#    RMSE = sqrt(mean((brazil_test_data$y - brazil_forecast$yhat)^2)),
-#    MAE = mean(abs(brazil_test_data$y - brazil_forecast$yhat)),
-#    MSE = mean((brazil_test_data$y - brazil_forecast$yhat)^2),
-#    MAPE = mean(abs((brazil_test_data$y - brazil_forecast$yhat) / brazil_test_data$y)) * 100)
-#  all_metrics <- bind_rows(all_metrics, metrics)
+  metrics <- data.frame(
+    RMSE = sqrt(mean((brazil_test_data$y - brazil_forecast$yhat)^2)),
+    MAE = mean(abs(brazil_test_data$y - brazil_forecast$yhat)),
+    MSE = mean((brazil_test_data$y - brazil_forecast$yhat)^2),
+    MAPE = mean(abs((brazil_test_data$y - brazil_forecast$yhat) / brazil_test_data$y)) * 100)
+  all_metrics <- bind_rows(all_metrics, metrics)
     
 }
 #  return (all_metrics)
 #}
 
-brazil_metrics <- fitting(brazil_folds)
+#brazil_metrics <- fitting(brazil_folds)
 
-## In brazil_test_data$y - brazil_forecast$yhat :
-## longer object length is not a multiple of shorter object length
-## 2: In brazil_test_data$y - brazil_forecast$yhat :
-##   longer object length is not a multiple of shorter object length
-## 3: In brazil_test_data$y - brazil_forecast$yhat :
-##   longer object length is not a multiple of shorter object length
-## 4: In brazil_test_data$y - brazil_forecast$yhat :
-##   longer object length is not a multiple of shorter object length
-## 5: In (brazil_test_data$y - brazil_forecast$yhat)/brazil_test_data$y :
-##   longer object length is not a multiple of shorter object length
-
-cat("RMSE:", mean(brazil_metrics$RMSE))
-cat("MAE:", mean(brazil_metrics$MAE))
-cat("MSE:", mean(brazil_metrics$MSE))
-cat("MAPE:", mean(brazil_metrics$MAPE))
+cat("RMSE:", mean(metrics$RMSE))
+cat("MAE:", mean(metrics$MAE))
+cat("MSE:", mean(metrics$MSE))
+cat("MAPE:", mean(metrics$MAPE))
 
 brazil_all_dates <- c(brazil_train_data$ds, brazil_test_data$ds)
 brazil_all_values <- c(brazil_train_data$y, brazil_test_data$y)
@@ -269,7 +258,7 @@ fitting <- function(colombia_folds) {
     colombia_future <- make_future_dataframe(colombia_prophet, periods = nrow(colombia_test_data))
     colombia_forecast <- predict(colombia_prophet, colombia_future)
     
-    metrics <- data.frame(
+    colombia_metrics <- data.frame(
       RMSE = sqrt(mean((colombia_forecast$yhat - colombia_test_data$y)^2)),
       MAE = mean(abs(colombia_forecast$yhat - colombia_test_data$y)),
       MSE = mean((colombia_forecast$yhat - colombia_test_data$y)^2),
@@ -280,12 +269,12 @@ fitting <- function(colombia_folds) {
   return (all_metrics)
 }
 
-colombia_metrics <- fitting(colombia_folds)
+#colombia_metrics <- fitting(colombia_folds)
 
 cat("RMSE:", mean(colombia_metrics$RMSE))
 cat("MAE:", mean(colombia_metrics$MAE))
-cat("MSE:", mean(colombia_metrics$MSE))
-cat("MAPE:", mean(colombia_metrics$MAPE))
+cat("MSE:", mean(metrics$MSE))
+cat("MAPE:", mean(metrics$MAPE))
 
 colombia_all_dates <- c(colombia_train_data$ds, colombia_test_data$ds)
 colombia_all_values <- c(colombia_train_data$y, colombia_test_data$y)
@@ -353,7 +342,7 @@ fitting <- function(iran_folds) {
     iran_future <- make_future_dataframe(iran_prophet, periods = nrow(iran_test_data))
     iran_forecast <- predict(iran_prophet, iran_future)
     
-    metrics <- data.frame(
+    iran_metrics <- data.frame(
       RMSE = sqrt(mean((iran_forecast$yhat - iran_test_data$y)^2)),
       MAE = mean(abs(iran_forecast$yhat - iran_test_data$y)),
       MSE = mean((iran_forecast$yhat - iran_test_data$y)^2),
@@ -364,7 +353,7 @@ fitting <- function(iran_folds) {
   return (all_metrics)
 }
 
-iran_metrics <- fitting(iran_folds)
+#iran_metrics <- fitting(iran_folds)
 
 cat("RMSE:", mean(iran_metrics$RMSE))
 cat("MAE:", mean(iran_metrics$MAE))
@@ -437,7 +426,7 @@ fitting <- function(mexico_folds) {
     mexico_future <- make_future_dataframe(mexico_prophet, periods = nrow(mexico_test_data))
     mexico_forecast <- predict(mexico_prophet, mexico_future)
     
-    metrics <- data.frame(
+    mexico_metrics <- data.frame(
       RMSE = sqrt(mean((mexico_forecast$yhat - mexico_test_data$y)^2)),
       MAE = mean(abs(mexico_forecast$yhat - mexico_test_data$y)),
       MSE = mean((mexico_forecast$yhat - mexico_test_data$y)^2),
@@ -448,7 +437,7 @@ fitting <- function(mexico_folds) {
   return (all_metrics)
 }
 
-mexico_metrics <- fitting(mexico_folds)
+#mexico_metrics <- fitting(mexico_folds)
 
 cat("RMSE:", mean(mexico_metrics$RMSE))
 cat("MAE:", mean(mexico_metrics$MAE))
@@ -521,7 +510,7 @@ fitting <- function(peru_folds) {
     peru_future <- make_future_dataframe(peru_prophet, periods = nrow(peru_test_data))
     peru_forecast <- predict(peru_prophet, peru_future)
     
-    metrics <- data.frame(
+    peru_metrics <- data.frame(
       RMSE = sqrt(mean((peru_forecast$yhat - peru_test_data$y)^2)),
       MAE = mean(abs(peru_forecast$yhat - peru_test_data$y)),
       MSE = mean((peru_forecast$yhat - peru_test_data$y)^2),
@@ -532,7 +521,7 @@ fitting <- function(peru_folds) {
   return (all_metrics)
 }
 
-peru_metrics <- fitting(peru_folds)
+#peru_metrics <- fitting(peru_folds)
 
 cat("RMSE:", mean(peru_metrics$RMSE))
 cat("MAE:", mean(peru_metrics$MAE))
@@ -604,7 +593,7 @@ fitting <- function(russia_folds) {
     russia_future <- make_future_dataframe(russia_prophet, periods = nrow(russia_test_data))
     russia_forecast <- predict(russia_prophet, russia_future)
     
-    metrics <- data.frame(
+    russia_metrics <- data.frame(
       RMSE = sqrt(mean((russia_forecast$yhat - russia_test_data$y)^2)),
       MAE = mean(abs(russia_forecast$yhat - russia_test_data$y)),
       MSE = mean((russia_forecast$yhat - russia_test_data$y)^2),
@@ -687,7 +676,7 @@ fitting <- function(saudi_folds) {
     saudi_future <- make_future_dataframe(saudi_prophet, periods = nrow(saudi_test_data))
     saudi_forecast <- predict(saudi_prophet, saudi_future)
     
-    metrics <- data.frame(
+    saudi_metrics <- data.frame(
       RMSE = sqrt(mean((saudi_forecast$yhat - saudi_test_data$y)^2)),
       MAE = mean(abs(saudi_forecast$yhat - saudi_test_data$y)),
       MSE = mean((saudi_forecast$yhat - saudi_test_data$y)^2),
@@ -698,7 +687,7 @@ fitting <- function(saudi_folds) {
   return (all_metrics)
 }
 
-saudi_metrics <- fitting(saudi_folds)
+#saudi_metrics <- fitting(saudi_folds)
 
 cat("RMSE:", mean(saudi_metrics$RMSE))
 cat("MAE:", mean(saudi_metrics$MAE))
@@ -770,7 +759,7 @@ fitting <- function(turkey_folds) {
     turkey_future <- make_future_dataframe(turkey_prophet, periods = nrow(turkey_test_data))
     turkey_forecast <- predict(turkey_prophet, turkey_future)
     
-    metrics <- data.frame(
+    turkey_metrics <- data.frame(
       RMSE = sqrt(mean((turkey_forecast$yhat - turkey_test_data$y)^2)),
       MAE = mean(abs(turkey_forecast$yhat - turkey_test_data$y)),
       MSE = mean((turkey_forecast$yhat - turkey_test_data$y)^2),
@@ -781,7 +770,7 @@ fitting <- function(turkey_folds) {
   return (all_metrics)
 }
 
-turkey_metrics <- fitting(turkey_folds)
+#turkey_metrics <- fitting(turkey_folds)
 
 cat("RMSE:", mean(turkey_metrics$RMSE))
 cat("MAE:", mean(turkey_metrics$MAE))
@@ -853,7 +842,7 @@ fitting <- function(us_folds) {
     us_future <- make_future_dataframe(us_prophet, periods = nrow(us_test_data))
     us_forecast <- predict(us_prophet, us_future)
     
-    metrics <- data.frame(
+    us_metrics <- data.frame(
       RMSE = sqrt(mean((us_forecast$yhat - us_test_data$y)^2)),
       MAE = mean(abs(us_forecast$yhat - us_test_data$y)),
       MSE = mean((us_forecast$yhat - us_test_data$y)^2),
@@ -864,7 +853,7 @@ fitting <- function(us_folds) {
   return (all_metrics)
 }
 
-us_metrics <- fitting(us_folds)
+#us_metrics <- fitting(us_folds)
 
 cat("RMSE:", mean(us_metrics$RMSE))
 cat("MAE:", mean(us_metrics$MAE))
