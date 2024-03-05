@@ -1,4 +1,4 @@
-## Univariate Prophet
+## Multivariate Prophet
 
 # primary checks ----
 
@@ -6,7 +6,8 @@
 library(dplyr)
 library(prophet)
 library(fastDummies)
-library(tidymodels) # For various modeling tools
+library(tidymodels)
+library(doMC)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -29,7 +30,7 @@ df_with_dummies <- preprocessed_covid_multi_imputed %>%
   dummy_cols("country", remove_first_dummy = TRUE, remove_selected_columns = TRUE) %>%
   janitor::clean_names() %>%
   mutate(ds = as.Date(date), y = owid_new_deaths) %>%
-  arrange(ds) # Ensure data is sorted by date
+  arrange(ds)
 
 # converting weekday
 df_with_dummies <- df_with_dummies %>%

@@ -1589,7 +1589,71 @@ print(arima_final_metrics_df)
 # removing row names
 row.names(arima_final_metrics_df) <- NULL
 
+# arima parameters
+arima_params <- data.frame(
+  Country = c("Bolivia", "Brazil", "Colombia", "Iran", "Mexico", "Peru", "Russia", "Saudi", "Turkey", "US"),
+  p = c(0, 0, 0, 1, 1, 0, 1, 1, 0, 0),
+  d = c(1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+  q = c(1, 1, 0, 0, 0, 1, 0, 0, 0, 0),
+  P = c(0, 0, 1, 1, 1, 0, 0, 1, 0, 1),
+  D = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+  Q = c(0, 0, 1, 0, 0, 1, 0, 0, 0, 1),
+  s = c(7, 7, 10, 10, 13, 3, 2, 3, 1, 7)
+) %>% DT::datatable()
+
+# auto-arima parameters
+auto_arima_params <- data.frame(
+  Country = c("Bolivia", "Brazil", "Colombia", "Iran", "Mexico", "Peru", "Russia", "Saudi", "Turkey", "US"),
+  p = c(2, 3, 1, 2, 0, 1, 0, 3, 1, 2),
+  d = c(1, 0, 1, 1, 1, 1, 1, 1, 1, 1),
+  q = c(2, 3, 1, 0, 2, 3, 1, 0, 1, 2),
+  P = c(1, 0, 1, 0, 1, 0, 2, 1, 0, 1),
+  D = c(1, 1, 1, 1, 0, 1, 1, 1, 1, 1),
+  Q = c(1, 2, 1, 1, 1, 0, 2, 1, 2, 1),
+  s = c(7, 7, 12, 12, 12, 4, 12, 12, 12, 7)
+) %>% DT::datatable()
+
+# initializing an empty list to store the metrics for each country
+auto_arima_metrics_list <- list()
+
+# looping through each country
+for (country_name in country_names) {
+  
+  # loading country-specific training data
+  country_train_data <- get(paste0(country_name, "_train_data"))
+  country_test_data <- get(paste0(country_name, "_test_data"))
+  
+  # fitting the Auto-ARIMA model to the training data
+  auto_model <- auto.arima(country_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+  
+  # forecasting using the Auto-ARIMA model
+  auto_forecast <- forecast(auto_model, h = nrow(country_test_data))
+  
+  # calculating metrics for Auto-ARIMA
+  auto_metrics <- calculate_metrics(auto_forecast$mean, country_test_data$owid_new_deaths, country_train_data$owid_new_deaths)
+  
+  # creating a data frame for the Auto-ARIMA metrics
+  auto_metrics_df <- data.frame(
+    Country = ifelse(country_name == "us", "US", tools::toTitleCase(country_name)),
+    RMSE = round(auto_metrics$RMSE, 3),
+    MAE = round(auto_metrics$MAE, 3),
+    MSE = round(auto_metrics$MSE, 3),
+    MAPE = round(auto_metrics$MAPE, 3),
+    MASE = round(auto_metrics$MASE, 3)
+  )
+  
+  # storing the data frame in the list
+  auto_arima_metrics_list[[country_name]] <- auto_metrics_df
+}
+
+# combining all the country-specific metrics into a single data frame
+auto_arima_final_metrics_df <- do.call(rbind, auto_arima_metrics_list)
+
+# removing row names for a cleaner look
+row.names(auto_arima_final_metrics_df) <- NULL
+
 
 
 # saving files ----
 save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
+save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda")
