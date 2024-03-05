@@ -50,7 +50,7 @@ numeric_cols <- colnames(multivar_boost)[-1]  # Exclude the "date" column
 multivar_boost <- apply(multivar_boost[, numeric_cols], 2, as.numeric)
 
 #Splitting the training and testing data
-multivar_split_index <- floor(0.9 * nrow(multivar_boost))
+multivar_split_index <- floor(0.8 * nrow(multivar_boost))
 multivar_boost_train_data <- multivar_boost[1:multivar_split_index, ]
 multivar_boost_test_data <- multivar_boost[(multivar_split_index + 1):nrow(multivar_boost), ]
 

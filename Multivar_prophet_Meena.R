@@ -17,6 +17,8 @@ library(seastests)
 library(gridExtra)
 library(timetk)
 library(tidymodels)
+library(tseries)
+library(stats)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
