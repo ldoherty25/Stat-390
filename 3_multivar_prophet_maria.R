@@ -8,6 +8,7 @@ library(prophet)
 library(fastDummies)
 library(tidymodels)
 library(doMC)
+library(ggplot2)
 
 # set up parallel processing 
 registerDoMC(cores = 8)
@@ -150,3 +151,31 @@ maria_multivar_prophet_table <- data.frame(
 
 # saving files ----
 save(maria_multivar_prophet_table, file = "data_frames/maria_multivar_prophet_table.rda")
+
+
+
+# creating visualizations ----
+
+# summing new deaths across all countries for each date
+
+agg_actuals <- cv_validation_df %>%
+  group_by(ds) %>%
+  summarize(agg_new_deaths = sum(y, na.rm = TRUE))
+
+agg_forecasts <- cv_forecast %>%
+  group_by(ds) %>%
+  summarize(agg_yhat = sum(yhat, na.rm = TRUE),
+            agg_yhat_lower = sum(yhat_lower, na.rm = TRUE),
+            agg_yhat_upper = sum(yhat_upper, na.rm = TRUE))
+
+# creating a plot with aggregated actual and forecasted values
+ggplot() +
+  geom_line(data = agg_actuals, aes(x = ds, y = agg_new_deaths), color = "blue", size = 1) +
+  geom_line(data = agg_forecasts, aes(x = ds, y = agg_yhat), color = "red", size = 1, linetype = "dashed") +
+  geom_ribbon(data = agg_forecasts, aes(x = ds, ymin = agg_yhat_lower, ymax = agg_yhat_upper),
+              fill = "orange", alpha = 0.2) +
+  labs(title = "Aggregated Actual vs Forecasted New Deaths Across All Countries",
+       x = "Date",
+       y = "Aggregated New Deaths") +
+  theme_minimal() +
+  theme(legend.position = "bottom")

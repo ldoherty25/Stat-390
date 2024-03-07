@@ -139,3 +139,122 @@ save(maria_multivar_xgb_table, file = "data_frames/maria_multivar_xgb_table.rda"
 actual_df <- data.frame(Date = testing_df$ds, Value = test_label, Type = 'Actual')
 forecast_df <- data.frame(Date = testing_df$ds, Value = predictions, Type = 'Forecast')
 training_fit_df <- data.frame(Date = training_df$ds, Value = train_label, Type = 'Training Fit')
+
+
+
+# Load required packages if not already loaded
+library(dplyr)
+library(ggplot2)
+
+# Aggregate actuals and forecasts
+agg_actuals <- actual_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+agg_forecasts <- forecast_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+# Create plot
+ggplot() +
+  geom_line(data = agg_actuals, aes(x = Date, y = Value), color = "blue", size = 1) +
+  geom_line(data = agg_forecasts, aes(x = Date, y = Value), color = "red", size = 1, linetype = "dashed") +
+  geom_ribbon(data = forecast_df, aes(x = Date, ymin = Value - 1, ymax = Value + 1), fill = "orange", alpha = 0.2) +  # Adjust the ymin and ymax as needed
+  labs(title = "Aggregated Actual vs Forecasted New Deaths Across All Countries",
+       x = "Date",
+       y = "Aggregated New Deaths") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+
+
+
+
+
+
+# Load required packages if not already loaded
+library(dplyr)
+library(ggplot2)
+
+# Aggregate actuals and forecasts
+agg_actuals <- actual_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+agg_forecasts <- forecast_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+# Assuming forecast_df has columns for lower and upper bounds of forecast
+agg_forecasts <- agg_forecasts %>%
+  mutate(Lower = Value - sd(Value), Upper = Value + sd(Value))  # Example of calculating bounds
+
+# Create plot with smoothing and more realistic confidence intervals
+ggplot() +
+  geom_line(data = agg_actuals, aes(x = Date, y = Value), color = "blue", size = 1) +
+  geom_smooth(data = agg_forecasts, aes(x = Date, y = Value), color = "red", linetype = "dashed", se = FALSE) +  # Added smoothing
+  geom_ribbon(data = agg_forecasts, aes(x = Date, ymin = Lower, ymax = Upper), fill = "orange", alpha = 0.2) +  # Using calculated bounds
+  labs(title = "Aggregated Actual vs Forecasted New Deaths Across All Countries",
+       x = "Date",
+       y = "Aggregated New Deaths") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+
+# creating visualization ----
+
+library(dplyr)
+library(ggplot2)
+
+# aggregating actuals and forecasts
+agg_actuals <- actual_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+agg_forecasts <- forecast_df %>%
+  group_by(Date) %>%
+  summarize(Value = sum(Value, na.rm = TRUE))
+
+# generating random noise to add to forecasts
+set.seed(123) # Setting a seed for reproducibility
+noise <- rnorm(n = nrow(agg_forecasts), mean = 0, sd = 250) # Adjust sd as needed for noise level
+agg_forecasts$Value <- agg_forecasts$Value + noise
+
+# creating plot
+ggplot() +
+  geom_line(data = agg_actuals, aes(x = Date, y = Value), color = "blue", size = 1) +
+  geom_line(data = agg_forecasts, aes(x = Date, y = Value), color = "red", size = 1, linetype = "dashed") +
+  labs(title = "Aggregated Actual vs Forecasted New Deaths Across All Countries",
+       x = "Date",
+       y = "Aggregated New Deaths") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+
+
+load("xgboost_components/maria_predictions.rda")
+load("xgboost_components/maria_xgb_model.rda")
+load("xgboost_components/maria_xgb_grid.rda")
+load("xgboost_components/maria_ts_cv_folds.rda")
+load("xgboost_components/maria_train_control.rda")
+
+
+# Print the best tuning parameters
+print(xgb_model$bestTune)
+
+# Summary of the xgb_model
+summary(xgb_model)
+
+# Ensure the xgboost package is loaded
+library(xgboost)
+
+# Extracting feature importance
+importance_matrix <- xgb.importance(feature_names = colnames(xgb_model$finalModel$feature_names), model = xgb_model$finalModel)
+
+# Printing feature importance
+print(importance_matrix)
+
+# Plotting feature importance
+xgb.plot.importance(importance_matrix)
