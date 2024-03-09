@@ -777,21 +777,30 @@ custom_features_target_corr <- preprocessed_covid_multi_imputed %>%
 
 # defining plots
 
-
 for_custom_features <- preprocessed_covid_multi_imputed %>% 
   select(policy_response_impact_cf, vulnerability_index_cf, owid_new_deaths)
 
 for_custom_features[is.na(for_custom_features) | for_custom_features=="Inf"] = NA
 
-plot3 <- ggplot(preprocessed_covid_multi_imputed, aes(x = policy_response_impact_cf, y = owid_new_deaths)) +
+plot3 <- ggplot(for_custom_features, aes(x = policy_response_impact_cf, y = owid_new_deaths)) +
   geom_jitter(alpha = 0.5, width = 0.1, height = 0) +
   geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
   labs(x = "Policy Response Impact", y = "New Deaths")
 
-plot4 <- ggplot(preprocessed_covid_multi_imputed, aes(x = vulnerability_index_cf, y = owid_new_deaths)) +
+# inspecting the range of your vulnerability_index_cf
+summary(for_custom_features$vulnerability_index_cf)
+
+# plotting the distribution to identify potential large values
+hist(for_custom_features$vulnerability_index_cf)
+
+# applying a transformation to mitigate large values
+for_custom_features$scaled_vulnerability_index_cf <- scale(for_custom_features$vulnerability_index_cf)
+
+# plotting with the scaled or adjusted values
+plot4 <- ggplot(for_custom_features, aes(x = scaled_vulnerability_index_cf, y = owid_new_deaths)) +
   geom_jitter(alpha = 0.5, width = 0.1, height = 0) +
   geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
-  labs(x = "Vulnerability Index", y = "New Deaths")
+  labs(x = "Scaled Vulnerability Index", y = "New Deaths")
 
 # arranging plots in a single visualization
 combined_plot_ii <- grid.arrange(plot3, plot4, ncol = 1)
