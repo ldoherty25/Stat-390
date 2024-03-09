@@ -119,24 +119,24 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>%
          ox_e4_international_support = abs(ox_e4_international_support))
 
 
-## removing outliers ----
-
-# creating a function to remove outliers within a group
-remove_outliers <- function(df, var_name) {
-  Q1 <- quantile(df[[var_name]], 0.25, na.rm = TRUE)
-  Q3 <- quantile(df[[var_name]], 0.75, na.rm = TRUE)
-  IQR <- Q3 - Q1
-  lower_bound <- Q1 - 1.5 * IQR
-  upper_bound <- Q3 + 1.5 * IQR
-  df <- df %>% filter(df[[var_name]] >= lower_bound & df[[var_name]] <= upper_bound)
-  return(df)
-}
-
-# applying to each country
-preprocessed_covid_multi <- preprocessed_covid_multi %>%
-  group_by(country) %>%
-  do(remove_outliers(., 'owid_new_deaths')) %>%
-  ungroup()
+# ## removing outliers ----
+# 
+# # creating a function to remove outliers within a group
+# remove_outliers <- function(df, var_name) {
+#   Q1 <- quantile(df[[var_name]], 0.25, na.rm = TRUE)
+#   Q3 <- quantile(df[[var_name]], 0.75, na.rm = TRUE)
+#   IQR <- Q3 - Q1
+#   lower_bound <- Q1 - 1.5 * IQR
+#   upper_bound <- Q3 + 1.5 * IQR
+#   df <- df %>% filter(df[[var_name]] >= lower_bound & df[[var_name]] <= upper_bound)
+#   return(df)
+# }
+# 
+# # applying to each country
+# preprocessed_covid_multi <- preprocessed_covid_multi %>%
+#   group_by(country) %>%
+#   do(remove_outliers(., 'owid_new_deaths')) %>%
+#   ungroup()
 
 
 ## assessing final missingness ----
@@ -544,7 +544,9 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>%
 ## removing low-correlation with target variable features ----
 
 # extracting numeric data
-numeric_data <- preprocessed_covid_multi %>% select_if(is.numeric)
+numeric_data <- preprocessed_covid_multi %>%
+  select(-owid_diabetes_prevalence) %>% 
+  select_if(is.numeric)
 
 # listing calculated correlation with target variable
 corr_target <- cor(numeric_data, use = "complete.obs")[, "owid_new_deaths"]
@@ -652,14 +654,12 @@ correlation_graph_i <- ggplot(melted_corr_matrix, aes(Var1, Var2, fill = value))
 
 # creating custom domain knowledge features
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>%
-  mutate(cases_per_population_cf = owid_new_cases / owid_population,
-         deaths_per_population_cf = owid_new_deaths / owid_population,
-         policy_response_impact_cf = ((ox_c1_school_closing + ox_c2_workplace_closing + ox_c4_restrictions_on_gatherings +
+  mutate(policy_response_impact_cf = ((ox_c1_school_closing + ox_c2_workplace_closing + ox_c4_restrictions_on_gatherings +
                                         ox_c6_stay_at_home_requirements + ox_c7_restrictions_on_internal_movement) / 5),
          vulnerability_index_cf = ((owid_diabetes_prevalence + owid_male_smokers)/2)*ox_containment_health_index)
 
 cf_preprocessed_multi <- preprocessed_covid_multi_imputed %>% 
-  select(cases_per_population_cf, deaths_per_population_cf, policy_response_impact_cf, vulnerability_index_cf)
+  select(policy_response_impact_cf, vulnerability_index_cf)
 
 
 ## (updated) general correlation matrix ----
@@ -744,7 +744,7 @@ pm_correlation_graph <- ggplot(pm_melted_corr_matrix, aes(Var1, Var2, fill = val
 
 # filter out numerical data
 custom_features <- preprocessed_covid_multi_imputed %>% select_if(is.numeric) %>% 
-  select(owid_new_deaths, cases_per_population_cf, deaths_per_population_cf, policy_response_impact_cf, vulnerability_index_cf)
+  select(owid_new_deaths, policy_response_impact_cf, vulnerability_index_cf)
 
 # create a correlation matrix
 cf_correlation_matrix <- cor(custom_features, use = "complete.obs")
@@ -777,17 +777,11 @@ custom_features_target_corr <- preprocessed_covid_multi_imputed %>%
 
 # defining plots
 
-plot1 <- ggplot(preprocessed_covid_multi_imputed, aes(x = cases_per_population_cf, y = owid_new_deaths)) +
-  geom_jitter(alpha = 0.5, width = 0.02, height = 0.02) +
-  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
-  scale_x_continuous(trans = 'log10', labels = scales::scientific) +
-  labs(x = "Cases per Population", y = "New Deaths")
 
-plot2 <- ggplot(preprocessed_covid_multi_imputed, aes(x = deaths_per_population_cf, y = owid_new_deaths)) +
-  geom_jitter(alpha = 0.5, width = 0.3, height = 0) +
-  geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, color = "red") +
-  scale_x_log10() +
-  labs(x = "Deaths per Population (log scale)", y = "New Deaths")
+for_custom_features <- preprocessed_covid_multi_imputed %>% 
+  select(policy_response_impact_cf, vulnerability_index_cf, owid_new_deaths)
+
+for_custom_features[is.na(for_custom_features) | for_custom_features=="Inf"] = NA
 
 plot3 <- ggplot(preprocessed_covid_multi_imputed, aes(x = policy_response_impact_cf, y = owid_new_deaths)) +
   geom_jitter(alpha = 0.5, width = 0.1, height = 0) +
@@ -800,13 +794,13 @@ plot4 <- ggplot(preprocessed_covid_multi_imputed, aes(x = vulnerability_index_cf
   labs(x = "Vulnerability Index", y = "New Deaths")
 
 # arranging plots in a single visualization
-combined_plot_ii <- grid.arrange(plot1, plot2, plot3, plot4, ncol = 1)
+combined_plot_ii <- grid.arrange(plot3, plot4, ncol = 1)
 
 
 ## feature selection ----
 
 preprocessed_covid_multi_imputed <- preprocessed_covid_multi_imputed %>% 
-  select(-lagged_nd_7, -deaths_per_population_cf, -averaged_confirmed_cases)
+  select(-lagged_nd_7, -averaged_confirmed_cases)
 
 # # training a random forest model
 # rf_model <- randomForest(owid_new_deaths ~ ., data = preprocessed_covid_multi_imputed, importance = TRUE, na.action = na.omit)
