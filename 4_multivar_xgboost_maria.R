@@ -234,27 +234,26 @@ ggplot() +
 
 
 
+# extracting general information ----
+
+# loading files
 load("xgboost_components/maria_predictions.rda")
 load("xgboost_components/maria_xgb_model.rda")
 load("xgboost_components/maria_xgb_grid.rda")
 load("xgboost_components/maria_ts_cv_folds.rda")
 load("xgboost_components/maria_train_control.rda")
 
-
-# Print the best tuning parameters
+# printing best tuning parameters
 print(xgb_model$bestTune)
 
-# Summary of the xgb_model
+# summarizing xgb_model
 summary(xgb_model)
 
-# Ensure the xgboost package is loaded
-library(xgboost)
-
-# Extracting feature importance
+# extracting feature importance
 importance_matrix <- xgb.importance(feature_names = colnames(xgb_model$finalModel$feature_names), model = xgb_model$finalModel)
 
-# Printing feature importance
+# printing feature importance
 print(importance_matrix)
 
-# Plotting feature importance
+# plotting feature importance
 xgb.plot.importance(importance_matrix)
