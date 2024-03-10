@@ -442,6 +442,7 @@ generate_acf_pacf_plots <- function(country_name) {
 
 # generating plots for each country
 plots_list <- lapply(countries, generate_acf_pacf_plots)
+# Error in plot.new() : figure margins too large !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # determining layout and margins
 par(mfrow = c(5, 4), mar = c(5, 2, 2, 2) + 0.1)
@@ -792,6 +793,7 @@ summary(for_custom_features$vulnerability_index_cf)
 
 # plotting the distribution to identify potential large values
 hist(for_custom_features$vulnerability_index_cf)
+# Error in plot.new() : figure margins too large !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # applying a transformation to mitigate large values
 for_custom_features$scaled_vulnerability_index_cf <- scale(for_custom_features$vulnerability_index_cf)
@@ -804,7 +806,8 @@ plot4 <- ggplot(for_custom_features, aes(x = scaled_vulnerability_index_cf, y = 
 
 # arranging plots in a single visualization
 combined_plot_ii <- grid.arrange(plot3, plot4, ncol = 1)
-
+# Error in .Call.graphics(C_palette2, .Call(C_palette2, NULL)) : 
+#   invalid graphics state !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ## feature selection ----
 
