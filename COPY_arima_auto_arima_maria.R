@@ -79,8 +79,7 @@ for (i in seq_along(bolivia_folds$splits)) {
   
   # fitting to ARIMA model
   bolivia_arima_model <- arima(bolivia_train_data$owid_new_deaths,
-                               order = c(0, 1, 1),
-                               seasonal = list(order = c(0, 1, 0), period = 7))
+                               order = c(0, 1, 1))
   
   # forecasting with ARIMA
   bolivia_forecast_values <- forecast(bolivia_arima_model, h = nrow(bolivia_test_data))
@@ -163,67 +162,133 @@ brazil_folds %>% tk_time_series_cv_plan() %>%
 
 ## applying ARIMA model ----
 
-# creating metrics vector
-brazil_rmse_results <- numeric(length(brazil_folds$splits))
-brazil_mae_results <- numeric(length(brazil_folds$splits))
-brazil_mse_results <- numeric(length(brazil_folds$splits))
-brazil_mase_results <- numeric(length(brazil_folds$splits))
+### ARIMA
+brazil_arima_rmse_results <- numeric(length(brazil_folds$splits))
+brazil_arima_mae_results <- numeric(length(brazil_folds$splits))
+brazil_arima_mse_results <- numeric(length(brazil_folds$splits))
+brazil_arima_mase_results <- numeric(length(brazil_folds$splits))
 
-# fitting to model and calculating metrics
+# ARIMA : fitting to model and calculating metrics
 for (i in seq_along(brazil_folds$splits)) {
-  fold <- brazil_folds$splits[[i]]
-  brazil_train_data <- fold$data[fold$in_id, ]
-  brazil_test_data <- fold$data[fold$out_id, ]
+  arima_fold <- brazil_folds$splits[[i]]
+  brazil_arima_train_data <- arima_fold$data[arima_fold$in_id, ]
+  brazil_arima_test_data <- arima_fold$data[arima_fold$out_id, ]
   
   # fitting to ARIMA model
-  brazil_arima_model <- arima(brazil_train_data$owid_new_deaths,
-                              order = c(0, 1, 1),
-                              seasonal = list(order = c(0, 1, 0), period = 7))
+  brazil_arima_model <- arima(brazil_arima_train_data$owid_new_deaths,
+                              order = c(0, 1, 1)) 
   
   # forecasting with ARIMA
-  brazil_forecast_values <- forecast(brazil_arima_model, h = nrow(brazil_test_data))
+  brazil_arima_forecast_values <- forecast(brazil_arima_model, h = nrow(brazil_arima_test_data))
   
   # enforcing non-negativity on forecasted values
-  brazil_forecast_values$mean <- pmax(brazil_forecast_values$mean, 0)
+  brazil_arima_forecast_values$mean <- pmax(brazil_arima_forecast_values$mean, 0)
   
   # calculating evaluation metrics
-  brazil_errors <- brazil_forecast_values$mean - brazil_test_data$owid_new_deaths
-  brazil_rmse_results[i] <- sqrt(mean(brazil_errors^2))
-  brazil_mae_results[i] <- mean(abs(brazil_errors))
-  brazil_mse_results[i] <- mean(brazil_errors^2)
+  brazil_arima_errors <- brazil_arima_forecast_values$mean - brazil_arima_test_data$owid_new_deaths
+  brazil_arima_rmse_results[i] <- sqrt(mean(brazil_arima_errors^2))
+  brazil_arima_mae_results[i] <- mean(abs(brazil_arima_errors))
+  brazil_arima_mse_results[i] <- mean(brazil_arima_errors^2)
   
   # calculating MASE
-  brazil_mean_train_diff <- mean(abs(diff(brazil_train_data$owid_new_deaths)))
-  brazil_mase_results[i] <- mean(abs(brazil_errors)) / brazil_mean_train_diff
+  brazil_arima_mean_train_diff <- mean(abs(diff(brazil_arima_train_data$owid_new_deaths)))
+  brazil_arima_mase_results[i] <- mean(abs(brazil_arima_errors)) / brazil_arima_mean_train_diff
 }
 
 # printing metrics
-print(paste("RMSE:", mean(brazil_rmse_results)))
-print(paste("MAE:", mean(brazil_mae_results)))
-print(paste("MSE:", mean(brazil_mse_results)))
-print(paste("MASE:", mean(brazil_mase_results)))
+print(paste("RMSE:", mean(brazil_arima_rmse_results)))
+print(paste("MAE:", mean(brazil_arima_mae_results)))
+print(paste("MSE:", mean(brazil_arima_mse_results)))
+print(paste("MASE:", mean(brazil_arima_mase_results)))
 
 # retrieving the fitted values for the training set
-brazil_fitted_values <- fitted(brazil_arima_model)
+brazil_arima_fitted_values <- fitted(brazil_arima_model)
 
 # enforcing non-negativity on fitted values
-brazil_fitted_values <- pmax(brazil_fitted_values, 0)
+brazil_arima_fitted_values <- pmax(brazil_arima_fitted_values, 0)
 
 # combining training and test data for plotting
-brazil_all_dates <- c(brazil_train_data$date, brazil_test_data$date)
-brazil_all_values <- c(brazil_train_data$owid_new_deaths, brazil_test_data$owid_new_deaths)
+brazil_arima_all_dates <- c(brazil_arima_train_data$date, brazil_arima_test_data$date)
+brazil_arima_all_values <- c(brazil_arima_train_data$owid_new_deaths, brazil_arima_test_data$owid_new_deaths)
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(brazil_arima_all_dates, brazil_arima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(brazil_arima_test_data$date, brazil_arima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(brazil_arima_train_data$date, brazil_arima_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
+
+----------------
+
+### SARIMA
+# creating metrics vector
+brazil_sarima_rmse_results <- numeric(length(brazil_folds$splits))
+brazil_sarima_mae_results <- numeric(length(brazil_folds$splits))
+brazil_sarima_mse_results <- numeric(length(brazil_folds$splits))
+brazil_sarima_mase_results <- numeric(length(brazil_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(brazil_folds$splits)) {
+  sarima_fold <- brazil_folds$splits[[i]]
+  brazil_sarima_train_data <- sarima_fold$data[sarima_fold$in_id, ]
+  brazil_sarima_test_data <- sarima_fold$data[sarima_fold$out_id, ]
+  
+  # fitting to ARIMA model
+  brazil_sarima_model <- arima(brazil_sarima_train_data$owid_new_deaths,
+                              order = c(0, 1, 1),
+                              seasonal = list(order = c(0, 1, 0), period = 7)) #SARIMA bc saw a weekly pattern
+  
+  # forecasting with ARIMA
+  brazil_sarima_forecast_values <- forecast(brazil_sarima_model, h = nrow(brazil_sarima_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  brazil_sarima_forecast_values$mean <- pmax(brazil_sarima_forecast_values$mean, 0)
+  
+  # calculating evaluation metrics
+  brazil_sarima_errors <- brazil_sarima_forecast_values$mean - brazil_sarima_test_data$owid_new_deaths
+  brazil_sarima_rmse_results[i] <- sqrt(mean(brazil_sarima_errors^2))
+  brazil_sarima_mae_results[i] <- mean(abs(brazil_sarima_errors))
+  brazil_sarima_mse_results[i] <- mean(brazil_sarima_errors^2)
+  
+  # calculating MASE
+  brazil_sarima_mean_train_diff <- mean(abs(diff(brazil_sarima_train_data$owid_new_deaths)))
+  brazil_sarima_mase_results[i] <- mean(abs(brazil_sarima_errors)) / brazil_sarima_mean_train_diff
+}
+
+# printing metrics
+print(paste("RMSE:", mean(brazil_sarima_rmse_results)))
+print(paste("MAE:", mean(brazil_sarima_mae_results)))
+print(paste("MSE:", mean(brazil_sarima_mse_results)))
+print(paste("MASE:", mean(brazil_sarima_mase_results)))
+
+# retrieving the fitted values for the training set
+brazil_sarima_fitted_values <- fitted(brazil_sarima_arima_model)
+
+# enforcing non-negativity on fitted values
+brazil_sarima_fitted_values <- pmax(brazil_sarima_fitted_values, 0)
+
+# combining training and test data for plotting
+brazil_sarima_all_dates <- c(brazil_sarima_train_data$date, brazil_sarima_test_data$date)
+brazil_sarima_all_values <- c(brazil_sarima_train_data$owid_new_deaths, brazil_sarima_test_data$owid_new_deaths)
 
 
 ## producing a plot ----
 
 # plotting actual values for both training and test data
-plot(brazil_all_dates, brazil_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+plot(brazil_sarima_all_dates, brazil_sarima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
 
 # plotting the forecasted values for test data
-lines(brazil_test_data$date, brazil_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+lines(brazil_sarima_test_data$date, brazil_sarima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
 
 # plotting fitted training data
-lines(brazil_train_data$date, brazil_fitted_values, col = "red", lty = 1, lwd = 2)
+lines(brazil_sarima_train_data$date, brazil_sarima_fitted_values, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
@@ -275,8 +340,7 @@ for (i in seq_along(colombia_folds$splits)) {
   
   # fitting to ARIMA model
   colombia_arima_model <- arima(colombia_train_data$owid_new_deaths,
-                                order = c(0, 1, 0),
-                                seasonal = list(order = c(1, 1, 1), period = 10))
+                                order = c(0, 1, 0))
   
   # forecasting with ARIMA
   colombia_forecast_values <- forecast(colombia_arima_model, h = nrow(colombia_test_data))
@@ -373,8 +437,7 @@ for (i in seq_along(iran_folds$splits)) {
   
   # fitting to ARIMA model
   iran_arima_model <- arima(iran_train_data$owid_new_deaths,
-                            order = c(1, 1, 0),
-                            seasonal = list(order = c(1, 1, 0), period = 10))
+                            order = c(1, 1, 0))
   
   # forecasting with ARIMA
   iran_forecast_values <- forecast(iran_arima_model, h = nrow(iran_test_data))
@@ -458,66 +521,132 @@ mexico_folds %>% tk_time_series_cv_plan() %>%
 ## applying ARIMA model ----
 
 # creating metrics vector
-mexico_rmse_results <- numeric(length(mexico_folds$splits))
-mexico_mae_results <- numeric(length(mexico_folds$splits))
-mexico_mse_results <- numeric(length(mexico_folds$splits))
-mexico_mase_results <- numeric(length(mexico_folds$splits))
+mexico_arima_rmse_results <- numeric(length(mexico_folds$splits))
+mexico_arima_mae_results <- numeric(length(mexico_folds$splits))
+mexico_arima_mse_results <- numeric(length(mexico_folds$splits))
+mexico_arima_mase_results <- numeric(length(mexico_folds$splits))
 
 # fitting to model and calculating metrics
 for (i in seq_along(mexico_folds$splits)) {
-  fold <- mexico_folds$splits[[i]]
-  mexico_train_data <- fold$data[fold$in_id, ]
-  mexico_test_data <- fold$data[fold$out_id, ]
+  arima_fold <- mexico_folds$splits[[i]]
+  mexico_arima_train_data <- arima_fold$data[arima_fold$in_id, ]
+  mexico_arima_test_data <- arima_fold$data[arima_fold$out_id, ]
   
   # fitting to ARIMA model
-  mexico_arima_model <- arima(mexico_train_data$owid_new_deaths,
-                              order = c(1, 0, 0),
-                              seasonal = list(order = c(1, 1, 0), period = 13))
+  mexico_arima_model <- arima(mexico_arima_train_data$owid_new_deaths,
+                              order = c(1, 0, 0)) #found weekly so changed to 7
   
   # forecasting with ARIMA
-  mexico_forecast_values <- forecast(mexico_arima_model, h = nrow(mexico_test_data))
+  mexico_arima_forecast_values <- forecast(mexico_arima_model, h = nrow(mexico_arima_test_data))
   
   # enforcing non-negativity on forecasted values
-  mexico_forecast_values$mean <- pmax(mexico_forecast_values$mean, 0)
+  mexico_arima_forecast_values$mean <- pmax(mexico_arima_forecast_values$mean, 0)
   
   # calculating evaluation metrics
-  mexico_errors <- mexico_forecast_values$mean - mexico_test_data$owid_new_deaths
-  mexico_rmse_results[i] <- sqrt(mean(mexico_errors^2))
-  mexico_mae_results[i] <- mean(abs(mexico_errors))
-  mexico_mse_results[i] <- mean(mexico_errors^2)
+  mexico_arima_errors <- mexico_arima_forecast_values$mean - mexico_arima_test_data$owid_new_deaths
+  mexico_arima_rmse_results[i] <- sqrt(mean(mexico_arima_errors^2))
+  mexico_arima_mae_results[i] <- mean(abs(mexico_arima_errors))
+  mexico_arima_mse_results[i] <- mean(mexico_arima_errors^2)
   
   # calculating MASE
-  mexico_mean_train_diff <- mean(abs(diff(mexico_train_data$owid_new_deaths)))
-  mexico_mase_results[i] <- mean(abs(mexico_errors)) / mexico_mean_train_diff
+  mexico_arima_mean_train_diff <- mean(abs(diff(mexico_arima_train_data$owid_new_deaths)))
+  mexico_arima_mase_results[i] <- mean(abs(mexico_arima_errors)) / mexico_arima_mean_train_diff
 }
 
 # printing metrics
-print(paste("RMSE:", mean(mexico_rmse_results)))
-print(paste("MAE:", mean(mexico_mae_results)))
-print(paste("MSE:", mean(mexico_mse_results)))
-print(paste("MASE:", mean(mexico_mase_results)))
+print(paste("RMSE:", mean(mexico_arima_rmse_results)))
+print(paste("MAE:", mean(mexico_arima_mae_results)))
+print(paste("MSE:", mean(mexico_arima_mse_results)))
+print(paste("MASE:", mean(mexico_arima_mase_results)))
 
 # retrieving the fitted values for the training set
-mexico_fitted_values <- fitted(mexico_arima_model)
+mexico_arima_fitted_values <- fitted(mexico_arima_model)
 
 # enforcing non-negativity on fitted values
-mexico_fitted_values <- pmax(mexico_fitted_values, 0)
+mexico_arima_fitted_values <- pmax(mexico_arima_fitted_values, 0)
 
 # combining training and test data for plotting
-mexico_all_dates <- c(mexico_train_data$date, mexico_test_data$date)
-mexico_all_values <- c(mexico_train_data$owid_new_deaths, mexico_test_data$owid_new_deaths)
+mexico_arima_all_dates <- c(mexico_arima_train_data$date, mexico_arima_test_data$date)
+mexico_arima_all_values <- c(mexico_arima_train_data$owid_new_deaths, mexico_arima_test_data$owid_new_deaths)
 
 
 ## producing a plot ----
 
 # plotting actual values for both training and test data
-plot(mexico_all_dates, mexico_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+plot(mexico_arima_all_dates, mexico_arima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
 
 # plotting the forecasted values for test data
-lines(mexico_test_data$date, mexico_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+lines(mexico_arima_test_data$date, mexico_arima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
 
 # plotting fitted training data
-lines(mexico_train_data$date, mexico_fitted_values, col = "red", lty = 1, lwd = 2)
+lines(mexico_arima_train_data$date, mexico_arima_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
+
+### SARIMA --------------------
+
+# creating metrics vector
+mexico_sarima_rmse_results <- numeric(length(mexico_folds$splits))
+mexico_sarima_mae_results <- numeric(length(mexico_folds$splits))
+mexico_sarima_mse_results <- numeric(length(mexico_folds$splits))
+mexico_sarima_mase_results <- numeric(length(mexico_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(mexico_folds$splits)) {
+  sarima_fold <- mexico_folds$splits[[i]]
+  mexico_sarima_train_data <- sarima_fold$data[sarima_fold$in_id, ]
+  mexico_sarima_test_data <- sarima_fold$data[sarima_fold$out_id, ]
+  
+  # fitting to ARIMA model
+  mexico_sarima_model <- arima(mexico_sarima_train_data$owid_new_deaths,
+                              order = c(1, 0, 0),
+                              seasonal = list(order = c(1, 1, 0), period = 7)) #found weekly so changed to 7
+  
+  # forecasting with ARIMA
+  mexico_sarima_forecast_values <- forecast(mexico_sarima_model, h = nrow(mexico_sarima_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  mexico_sarima_forecast_values$mean <- pmax(mexico_sarima_forecast_values$mean, 0)
+  
+  # calculating evaluation metrics
+  mexico_sarima_errors <- mexico_sarima_forecast_values$mean - mexico_sarima_test_data$owid_new_deaths
+  mexico_sarima_rmse_results[i] <- sqrt(mean(mexico_sarima_errors^2))
+  mexico_sarima_mae_results[i] <- mean(abs(mexico_sarima_errors))
+  mexico_sarima_mse_results[i] <- mean(mexico_sarima_errors^2)
+  
+  # calculating MASE
+  mexico_sarima_mean_train_diff <- mean(abs(diff(mexico_sarima_train_data$owid_new_deaths)))
+  mexico_sarima_mase_results[i] <- mean(abs(mexico_sarima_errors)) / mexico_sarima_mean_train_diff
+}
+
+# printing metrics
+print(paste("RMSE:", mean(mexico_sarima_rmse_results)))
+print(paste("MAE:", mean(mexico_sarima_mae_results)))
+print(paste("MSE:", mean(mexico_sarima_mse_results)))
+print(paste("MASE:", mean(mexico_sarima_mase_results)))
+
+# retrieving the fitted values for the training set
+mexico_sarima_fitted_values <- fitted(mexico_sarima_model)
+
+# enforcing non-negativity on fitted values
+mexico_sarima_fitted_values <- pmax(mexico_sarima_fitted_values, 0)
+
+# combining training and test data for plotting
+mexico_sarima_all_dates <- c(mexico_sarima_train_data$date, mexico_sarima_test_data$date)
+mexico_sarima_all_values <- c(mexico_sarima_train_data$owid_new_deaths, mexico_sarima_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(mexico_sarima_all_dates, mexico_sarima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(mexico_sarima_test_data$date, mexico_sarima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(mexico_sarima_train_data$date, mexico_sarima_fitted_values, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
@@ -569,8 +698,7 @@ for (i in seq_along(peru_folds$splits)) {
   
   # fitting to ARIMA model
   peru_arima_model <- arima(peru_train_data$owid_new_deaths,
-                            order = c(0, 1, 1),
-                            seasonal = list(order = c(0, 1, 1), period = 3))
+                            order = c(0, 1, 1))
   
   # forecasting with ARIMA
   peru_forecast_values <- forecast(peru_arima_model, h = nrow(peru_test_data))
@@ -654,72 +782,135 @@ russia_folds %>% tk_time_series_cv_plan() %>%
 ## applying ARIMA model ----
 
 # creating metrics vector
-russia_rmse_results <- numeric(length(russia_folds$splits))
-russia_mae_results <- numeric(length(russia_folds$splits))
-russia_mse_results <- numeric(length(russia_folds$splits))
-russia_mase_results <- numeric(length(russia_folds$splits))
+russia_arima_rmse_results <- numeric(length(russia_folds$splits))
+russia_arima_mae_results <- numeric(length(russia_folds$splits))
+russia_arima_mse_results <- numeric(length(russia_folds$splits))
+russia_arima_mase_results <- numeric(length(russia_folds$splits))
 
 # fitting to model and calculating metrics
 for (i in seq_along(russia_folds$splits)) {
-  fold <- russia_folds$splits[[i]]
-  russia_train_data <- fold$data[fold$in_id, ]
-  russia_test_data <- fold$data[fold$out_id, ]
+  arima_fold <- russia_folds$splits[[i]]
+  russia_arima_train_data <- arima_fold$data[arima_fold$in_id, ]
+  russia_arima_test_data <- arima_fold$data[arima_fold$out_id, ]
   
   # fitting to ARIMA model
-  russia_arima_model <- arima(russia_train_data$owid_new_deaths,
-                              order = c(1, 1, 0),
-                              seasonal = list(order = c(0, 1, 0), period = 2))
+  russia_arima_model <- arima(russia_arima_train_data$owid_new_deaths,
+                              order = c(1, 1, 0)) 
   
   # forecasting with ARIMA
-  russia_forecast_values <- forecast(russia_arima_model, h = nrow(russia_test_data))
+  russia_arima_forecast_values <- forecast(russia_arima_model, h = nrow(russia_arima_test_data))
   
   # enforcing non-negativity on forecasted values
-  russia_forecast_values$mean <- pmax(russia_forecast_values$mean, 0)
+  russia_arima_forecast_values$mean <- pmax(russia_arima_forecast_values$mean, 0)
   
   # calculating evaluation metrics
-  russia_errors <- russia_forecast_values$mean - russia_test_data$owid_new_deaths
-  russia_rmse_results[i] <- sqrt(mean(russia_errors^2))
-  russia_mae_results[i] <- mean(abs(russia_errors))
-  russia_mse_results[i] <- mean(russia_errors^2)
+  russia_arima_errors <- russia_arima_forecast_values$mean - russia_arima_test_data$owid_new_deaths
+  russia_arima_rmse_results[i] <- sqrt(mean(russia_arima_errors^2))
+  russia_arima_mae_results[i] <- mean(abs(russia_arima_errors))
+  russia_arima_mse_results[i] <- mean(russia_arima_errors^2)
   
   # calculating MASE
-  russia_mean_train_diff <- mean(abs(diff(russia_train_data$owid_new_deaths)))
-  russia_mase_results[i] <- mean(abs(russia_errors)) / russia_mean_train_diff
+  russia_arima_mean_train_diff <- mean(abs(diff(russia_arima_train_data$owid_new_deaths)))
+  russia_arima_mase_results[i] <- mean(abs(russia_arima_errors)) / russia_arima_mean_train_diff
 }
 
 # printing metrics
-print(paste("RMSE:", mean(russia_rmse_results)))
-print(paste("MAE:", mean(russia_mae_results)))
-print(paste("MSE:", mean(russia_mse_results)))
-print(paste("MASE:", mean(russia_mase_results)))
+print(paste("RMSE:", mean(russia_arima_rmse_results)))
+print(paste("MAE:", mean(russia_arima_mae_results)))
+print(paste("MSE:", mean(russia_arima_mse_results)))
+print(paste("MASE:", mean(russia_arima_mase_results)))
 
 # retrieving the fitted values for the training set
-russia_fitted_values <- fitted(russia_arima_model)
+russia_arima_fitted_values <- fitted(russia_arima_model)
 
 # enforcing non-negativity on fitted values
-russia_fitted_values <- pmax(russia_fitted_values, 0)
+russia_arima_fitted_values <- pmax(russia_arima_fitted_values, 0)
 
 # combining training and test data for plotting
-russia_all_dates <- c(russia_train_data$date, russia_test_data$date)
-russia_all_values <- c(russia_train_data$owid_new_deaths, russia_test_data$owid_new_deaths)
+russia_arima_all_dates <- c(russia_arima_train_data$date, russia_arima_test_data$date)
+russia_arima_all_values <- c(russia_arima_train_data$owid_new_deaths, russia_arima_test_data$owid_new_deaths)
 
 
 ## producing a plot ----
 
 # plotting actual values for both training and test data
-plot(russia_all_dates, russia_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+plot(russia_arima_all_dates, russia_arima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
 
 # plotting the forecasted values for test data
-lines(russia_test_data$date, russia_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+lines(russia_arima_test_data$date, russia_arima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
 
 # plotting fitted training data
-lines(russia_train_data$date, russia_fitted_values, col = "red", lty = 1, lwd = 2)
+lines(russia_arima_train_data$date, russia_arima_fitted_values, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
+### SARIMA ---------------------------
+
+# creating metrics vector
+russia_sarima_rmse_results <- numeric(length(russia_folds$splits))
+russia_sarima_mae_results <- numeric(length(russia_folds$splits))
+russia_sarima_mse_results <- numeric(length(russia_folds$splits))
+russia_sarima_mase_results <- numeric(length(russia_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(russia_folds$splits)) {
+  sarima_fold <- russia_folds$splits[[i]]
+  russia_sarima_train_data <- sarima_fold$data[sarima_fold$in_id, ]
+  russia_sarima_test_data <- sarima_fold$data[sarima_fold$out_id, ]
+  
+  # fitting to ARIMA model
+  russia_sarima_model <- arima(russia_sarima_train_data$owid_new_deaths,
+                              order = c(1, 1, 0),
+                              seasonal = list(order = c(0, 1, 0), period = 7)) # changed to 7 (per feedback)
+  
+  # forecasting with ARIMA
+  russia_sarima_forecast_values <- forecast(russia_sarima_model, h = nrow(russia_sarima_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  russia_sarima_forecast_values$mean <- pmax(russia_sarima_forecast_values$mean, 0)
+  
+  # calculating evaluation metrics
+  russia_sarima_errors <- russia_sarima_forecast_values$mean - russia_sarima_test_data$owid_new_deaths
+  russia_sarima_rmse_results[i] <- sqrt(mean(russia_sarima_errors^2))
+  russia_sarima_mae_results[i] <- mean(abs(russia_sarima_errors))
+  russia_sarima_mse_results[i] <- mean(russia_sarima_errors^2)
+  
+  # calculating MASE
+  russia_sarima_mean_train_diff <- mean(abs(diff(russia_sarima_train_data$owid_new_deaths)))
+  russia_sarima_mase_results[i] <- mean(abs(russia_sarima_errors)) / russia_sarima_mean_train_diff
+}
+
+# printing metrics
+print(paste("RMSE:", mean(russia_sarima_rmse_results)))
+print(paste("MAE:", mean(russia_sarima_mae_results)))
+print(paste("MSE:", mean(russia_sarima_mse_results)))
+print(paste("MASE:", mean(russia_sarima_mase_results)))
+
+# retrieving the fitted values for the training set
+russia_sarima_fitted_values <- fitted(russia_sarima_model)
+
+# enforcing non-negativity on fitted values
+russia_sarima_fitted_values <- pmax(russia_sarima_fitted_values, 0)
+
+# combining training and test data for plotting
+russia_sarima_all_dates <- c(russia_sarima_train_data$date, russia_sarima_test_data$date)
+russia_sarima_all_values <- c(russia_sarima_train_data$owid_new_deaths, russia_sarima_test_data$owid_new_deaths)
 
 
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(russia_sarima_all_dates, russia_sarima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(russia_sarima_test_data$date, russia_sarima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(russia_sarima_train_data$date, russia_sarima_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
 # saudi ----
 
@@ -766,8 +957,7 @@ for (i in seq_along(saudi_folds$splits)) {
   
   # fitting to ARIMA model
   saudi_arima_model <- arima(saudi_train_data$owid_new_deaths,
-                             order = c(1, 1, 0),
-                             seasonal = list(order = c(1, 1, 0), period = 3))
+                             order = c(1, 1, 0))
   
   # forecasting with ARIMA
   saudi_forecast_values <- forecast(saudi_arima_model, h = nrow(saudi_test_data))
@@ -864,8 +1054,7 @@ for (i in seq_along(turkey_folds$splits)) {
   
   # fitting to ARIMA model
   turkey_arima_model <- arima(turkey_train_data$owid_new_deaths,
-                              order = c(0, 1, 0),
-                              seasonal = list(order = c(0, 1, 0), period = 1))
+                              order = c(0, 1, 0))
   
   # forecasting with ARIMA
   turkey_forecast_values <- forecast(turkey_arima_model, h = nrow(turkey_test_data))
@@ -949,71 +1138,135 @@ us_folds %>% tk_time_series_cv_plan() %>%
 ## applying ARIMA model ----
 
 # creating metrics vector
-us_rmse_results <- numeric(length(us_folds$splits))
-us_mae_results <- numeric(length(us_folds$splits))
-us_mse_results <- numeric(length(us_folds$splits))
-us_mase_results <- numeric(length(us_folds$splits))
+us_arima_rmse_results <- numeric(length(us_folds$splits))
+us_arima_mae_results <- numeric(length(us_folds$splits))
+us_arima_mse_results <- numeric(length(us_folds$splits))
+us_arima_mase_results <- numeric(length(us_folds$splits))
 
 # fitting to model and calculating metrics
 for (i in seq_along(us_folds$splits)) {
-  fold <- us_folds$splits[[i]]
-  us_train_data <- fold$data[fold$in_id, ]
-  us_test_data <- fold$data[fold$out_id, ]
+  arima_fold <- us_folds$splits[[i]]
+  us_arima_train_data <- arima_fold$data[arima_fold$in_id, ]
+  us_arima_test_data <- arima_fold$data[arima_fold$out_id, ]
   
   # fitting to ARIMA model
-  us_arima_model <- arima(us_train_data$owid_new_deaths,
-                          order = c(0, 0, 0),
-                          seasonal = list(order = c(1, 1, 1), period = 7))
+  us_arima_model <- arima(us_arima_train_data$owid_new_deaths,
+                          order = c(0, 0, 0))
   
   # forecasting with ARIMA
-  us_forecast_values <- forecast(us_arima_model, h = nrow(us_test_data))
+  us_arima_forecast_values <- forecast(us_arima_model, h = nrow(us_arima_test_data))
   
   # enforcing non-negativity on forecasted values
-  us_forecast_values$mean <- pmax(us_forecast_values$mean, 0)
+  us_arima_forecast_values$mean <- pmax(us_arima_forecast_values$mean, 0)
   
   # calculating evaluation metrics
-  us_errors <- us_forecast_values$mean - us_test_data$owid_new_deaths
-  us_rmse_results[i] <- sqrt(mean(us_errors^2))
-  us_mae_results[i] <- mean(abs(us_errors))
-  us_mse_results[i] <- mean(us_errors^2)
+  us_arima_errors <- us_arima_forecast_values$mean - us_arima_test_data$owid_new_deaths
+  us_arima_rmse_results[i] <- sqrt(mean(us_arima_errors^2))
+  us_arima_mae_results[i] <- mean(abs(us_arima_errors))
+  us_arima_mse_results[i] <- mean(us_arima_errors^2)
   
   # calculating MASE
-  us_mean_train_diff <- mean(abs(diff(us_train_data$owid_new_deaths)))
-  us_mase_results[i] <- mean(abs(us_errors)) / us_mean_train_diff
+  us_arima_mean_train_diff <- mean(abs(diff(us_arima_train_data$owid_new_deaths)))
+  us_arima_mase_results[i] <- mean(abs(us_arima_errors)) / us_arima_mean_train_diff
 }
 
 # printing metrics
-print(paste("RMSE:", mean(us_rmse_results)))
-print(paste("MAE:", mean(us_mae_results)))
-print(paste("MSE:", mean(us_mse_results)))
-print(paste("MASE:", mean(us_mase_results)))
+print(paste("RMSE:", mean(us_arima_rmse_results)))
+print(paste("MAE:", mean(us_arima_mae_results)))
+print(paste("MSE:", mean(us_arima_mse_results)))
+print(paste("MASE:", mean(us_arima_mase_results)))
 
 # retrieving the fitted values for the training set
-us_fitted_values <- fitted(us_arima_model)
+us_arima_fitted_values <- fitted(us_arima_model)
 
 # enforcing non-negativity on fitted values
-us_fitted_values <- pmax(us_fitted_values, 0)
+us_arima_fitted_values <- pmax(us_arima_fitted_values, 0)
 
 # combining training and test data for plotting
-us_all_dates <- c(us_train_data$date, us_test_data$date)
-us_all_values <- c(us_train_data$owid_new_deaths, us_test_data$owid_new_deaths)
+us_arima_all_dates <- c(us_arima_train_data$date, us_arima_test_data$date)
+us_arima_all_values <- c(us_arima_train_data$owid_new_deaths, us_arima_test_data$owid_new_deaths)
 
 
 ## producing a plot ----
 
 # plotting actual values for both training and test data
-plot(us_all_dates, us_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+plot(us_arima_all_dates, us_arima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
 
 # plotting the forecasted values for test data
-lines(us_test_data$date, us_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+lines(us_arima_test_data$date, us_arima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
 
 # plotting fitted training data
-lines(us_train_data$date, us_fitted_values, col = "red", lty = 1, lwd = 2)
+lines(us_arima_train_data$date, us_arima_fitted_values, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
+### SARIMA ---------------------------
 
+# creating metrics vector
+us_sarima_rmse_results <- numeric(length(us_folds$splits))
+us_sarima_mae_results <- numeric(length(us_folds$splits))
+us_sarima_mse_results <- numeric(length(us_folds$splits))
+us_sarima_mase_results <- numeric(length(us_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(us_folds$splits)) {
+  sarima_fold <- us_folds$splits[[i]]
+  us_sarima_train_data <- sarima_fold$data[sarima_fold$in_id, ]
+  us_sarima_test_data <- sarima_fold$data[sarima_fold$out_id, ]
+  
+  # fitting to ARIMA model
+  us_sarima_model <- arima(us_sarima_train_data$owid_new_deaths,
+                          order = c(0, 0, 0),
+                          seasonal = list(order = c(1, 1, 1), period = 7))
+  
+  # forecasting with ARIMA
+  us_sarima_forecast_values <- forecast(us_sarima_model, h = nrow(us_sarima_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  us_sarima_forecast_values$mean <- pmax(us_sarima_forecast_values$mean, 0)
+  
+  # calculating evaluation metrics
+  us_sarima_errors <- us_sarima_forecast_values$mean - us_sarima_test_data$owid_new_deaths
+  us_sarima_rmse_results[i] <- sqrt(mean(us_sarima_errors^2))
+  us_sarima_mae_results[i] <- mean(abs(us_sarima_errors))
+  us_sarima_mse_results[i] <- mean(us_sarima_errors^2)
+  
+  # calculating MASE
+  us_sarima_mean_train_diff <- mean(abs(diff(us_sarima_train_data$owid_new_deaths)))
+  us_sarima_mase_results[i] <- mean(abs(us_sarima_errors)) / us_sarima_mean_train_diff
+}
+
+# printing metrics
+print(paste("RMSE:", mean(us_sarima_rmse_results)))
+print(paste("MAE:", mean(us_sarima_mae_results)))
+print(paste("MSE:", mean(us_sarima_mse_results)))
+print(paste("MASE:", mean(us_sarima_mase_results)))
+
+# retrieving the fitted values for the training set
+us_sarima_fitted_values <- fitted(us_sarima_model)
+
+# enforcing non-negativity on fitted values
+us_sarima_fitted_values <- pmax(us_sarima_fitted_values, 0)
+
+# combining training and test data for plotting
+us_sarima_all_dates <- c(us_sarima_train_data$date, us_sarima_test_data$date)
+us_sarima_all_values <- c(us_sarima_train_data$owid_new_deaths, us_sarima_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(us_sarima_all_dates, us_sarima_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(us_sarima_test_data$date, us_sarima_forecast_values$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(us_sarima_train_data$date, us_sarima_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
 # # finding best parameters per country ----
 # 

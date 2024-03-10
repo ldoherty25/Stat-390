@@ -23,6 +23,7 @@ set.seed(1234)
 # load data ----
 load("data/preprocessed/multivariate/not_split/preprocessed_covid_multi_imputed.rda")
 
+# Want to remove all zero observations before the first death
 
 
 # variable adjustments ----
@@ -50,8 +51,8 @@ training_df <- df_with_dummies[1:split_index, ]
 testing_df <- df_with_dummies[(split_index + 1):nrow(df_with_dummies), ]
 
 # model setup and training
-m <- prophet(growth = "linear", yearly.seasonality = FALSE, weekly.seasonality = TRUE,
-             daily.seasonality = FALSE, seasonality.mode = "additive", 
+### removed seasonality since it's built into prophet -----
+m <- prophet(growth = "linear", seasonality.mode = "additive", 
              seasonality.prior.scale = 10, holidays.prior.scale = 10,
              changepoint.prior.scale = 0.1, n.changepoints = 25, 
              changepoint.range = 0.8, interval.width = 0.8, uncertainty.samples = 1000)
@@ -61,6 +62,7 @@ predictor_columns <- setdiff(names(training_df), c("ds", "y", "date", "owid_new_
 for (predictor in predictor_columns) {
   m <- add_regressor(m, predictor)
 }
+### doesn't look like the target var is in the predictors specified
 
 # fitting model with training data
 m <- prophet::fit.prophet(m, df = training_df)
@@ -76,9 +78,6 @@ cv_validation_df <- training_df[(cv_split_index + 1):nrow(training_df), ]
 create_prophet_model <- function() {
   prophet(
     growth = "linear",
-    yearly.seasonality = FALSE,
-    weekly.seasonality = TRUE,
-    daily.seasonality = FALSE,
     seasonality.mode = "additive",
     seasonality.prior.scale = 10,
     holidays.prior.scale = 10,
