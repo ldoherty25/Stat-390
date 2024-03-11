@@ -1,5 +1,7 @@
 ## ARIMA and Auto-ARIMA
 
+
+
 # primary checks ----
 
 # load packages
@@ -68,7 +70,6 @@ bolivia_folds %>% tk_time_series_cv_plan() %>%
 bolivia_rmse_results <- numeric(length(bolivia_folds$splits))
 bolivia_mae_results <- numeric(length(bolivia_folds$splits))
 bolivia_mse_results <- numeric(length(bolivia_folds$splits))
-bolivia_mape_results <- numeric(length(bolivia_folds$splits))
 bolivia_mase_results <- numeric(length(bolivia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -79,8 +80,7 @@ for (i in seq_along(bolivia_folds$splits)) {
   
   # fitting to ARIMA model
   bolivia_arima_model <- arima(bolivia_train_data$owid_new_deaths,
-                              order = c(0, 1, 1),
-                              seasonal = list(order = c(0, 1, 0), period = 7))
+                               order = c(1, 1, 0))
   
   # forecasting with ARIMA
   bolivia_forecast_values <- forecast(bolivia_arima_model, h = nrow(bolivia_test_data))
@@ -93,7 +93,6 @@ for (i in seq_along(bolivia_folds$splits)) {
   bolivia_rmse_results[i] <- sqrt(mean(bolivia_errors^2))
   bolivia_mae_results[i] <- mean(abs(bolivia_errors))
   bolivia_mse_results[i] <- mean(bolivia_errors^2)
-  bolivia_mape_results[i] <- mean(abs(bolivia_errors / bolivia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   bolivia_mean_train_diff <- mean(abs(diff(bolivia_train_data$owid_new_deaths)))
@@ -104,7 +103,6 @@ for (i in seq_along(bolivia_folds$splits)) {
 print(paste("RMSE:", mean(bolivia_rmse_results)))
 print(paste("MAE:", mean(bolivia_mae_results)))
 print(paste("MSE:", mean(bolivia_mse_results)))
-print(paste("MAPE:", mean(bolivia_mape_results)))
 print(paste("MASE:", mean(bolivia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -169,7 +167,6 @@ brazil_folds %>% tk_time_series_cv_plan() %>%
 brazil_rmse_results <- numeric(length(brazil_folds$splits))
 brazil_mae_results <- numeric(length(brazil_folds$splits))
 brazil_mse_results <- numeric(length(brazil_folds$splits))
-brazil_mape_results <- numeric(length(brazil_folds$splits))
 brazil_mase_results <- numeric(length(brazil_folds$splits))
 
 # fitting to model and calculating metrics
@@ -180,8 +177,7 @@ for (i in seq_along(brazil_folds$splits)) {
   
   # fitting to ARIMA model
   brazil_arima_model <- arima(brazil_train_data$owid_new_deaths,
-                              order = c(0, 1, 1),
-                              seasonal = list(order = c(0, 1, 0), period = 7))
+                              order = c(2, 1, 2))
   
   # forecasting with ARIMA
   brazil_forecast_values <- forecast(brazil_arima_model, h = nrow(brazil_test_data))
@@ -194,7 +190,6 @@ for (i in seq_along(brazil_folds$splits)) {
   brazil_rmse_results[i] <- sqrt(mean(brazil_errors^2))
   brazil_mae_results[i] <- mean(abs(brazil_errors))
   brazil_mse_results[i] <- mean(brazil_errors^2)
-  brazil_mape_results[i] <- mean(abs(brazil_errors / brazil_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   brazil_mean_train_diff <- mean(abs(diff(brazil_train_data$owid_new_deaths)))
@@ -205,7 +200,6 @@ for (i in seq_along(brazil_folds$splits)) {
 print(paste("RMSE:", mean(brazil_rmse_results)))
 print(paste("MAE:", mean(brazil_mae_results)))
 print(paste("MSE:", mean(brazil_mse_results)))
-print(paste("MAPE:", mean(brazil_mape_results)))
 print(paste("MASE:", mean(brazil_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -229,6 +223,74 @@ lines(brazil_test_data$date, brazil_forecast_values$mean, col = "blue", lty = 2,
 
 # plotting fitted training data
 lines(brazil_train_data$date, brazil_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
+
+
+## applying SARIMA model ----
+
+# creating metrics vector
+brazil_rmse_results_sarima <- numeric(length(brazil_folds$splits))
+brazil_mae_results_sarima <- numeric(length(brazil_folds$splits))
+brazil_mse_results_sarima <- numeric(length(brazil_folds$splits))
+brazil_mase_results_sarima <- numeric(length(brazil_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(brazil_folds$splits)) {
+  fold <- brazil_folds$splits[[i]]
+  brazil_train_data <- fold$data[fold$in_id, ]
+  brazil_test_data <- fold$data[fold$out_id, ]
+  
+  # fitting to ARIMA model
+  brazil_sarima_model <- arima(brazil_train_data$owid_new_deaths,
+                              order = c(0, 2, 2),
+                              seasonal = list(order = c(1, 0, 0), period = 7))
+  
+  # forecasting with ARIMA
+  brazil_forecast_values_sarima <- forecast(brazil_sarima_model, h = nrow(brazil_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  brazil_forecast_values_sarima$mean <- pmax(brazil_forecast_values_sarima$mean, 0)
+  
+  # calculating evaluation metrics
+  brazil_errors_sarima <- brazil_forecast_values_sarima$mean - brazil_test_data$owid_new_deaths
+  brazil_rmse_results_sarima[i] <- sqrt(mean(brazil_errors_sarima^2))
+  brazil_mae_results_sarima[i] <- mean(abs(brazil_errors_sarima))
+  brazil_mse_results_sarima[i] <- mean(brazil_errors_sarima^2)
+  
+  # calculating MASE
+  brazil_mean_train_diff_sarima <- mean(abs(diff(brazil_train_data$owid_new_deaths)))
+  brazil_mase_results_sarima[i] <- mean(abs(brazil_errors_sarima)) / brazil_mean_train_diff_sarima
+}
+
+# printing metrics
+print(paste("RMSE:", mean(brazil_rmse_results_sarima)))
+print(paste("MAE:", mean(brazil_mae_results_sarima)))
+print(paste("MSE:", mean(brazil_mse_results_sarima)))
+print(paste("MASE:", mean(brazil_mase_results_sarima)))
+
+# retrieving the fitted values for the training set
+brazil_fitted_values_sarima <- fitted(brazil_sarima_model)
+
+# enforcing non-negativity on fitted values
+brazil_fitted_values_sarima <- pmax(brazil_fitted_values_sarima, 0)
+
+# combining training and test data for plotting
+brazil_all_dates <- c(brazil_train_data$date, brazil_test_data$date)
+brazil_all_values <- c(brazil_train_data$owid_new_deaths, brazil_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(brazil_all_dates, brazil_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(brazil_test_data$date, brazil_forecast_values_sarima$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(brazil_train_data$date, brazil_fitted_values_sarima, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
@@ -270,7 +332,6 @@ colombia_folds %>% tk_time_series_cv_plan() %>%
 colombia_rmse_results <- numeric(length(colombia_folds$splits))
 colombia_mae_results <- numeric(length(colombia_folds$splits))
 colombia_mse_results <- numeric(length(colombia_folds$splits))
-colombia_mape_results <- numeric(length(colombia_folds$splits))
 colombia_mase_results <- numeric(length(colombia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -281,9 +342,7 @@ for (i in seq_along(colombia_folds$splits)) {
   
   # fitting to ARIMA model
   colombia_arima_model <- arima(colombia_train_data$owid_new_deaths,
-                              order = c(0, 1, 0),
-                              seasonal = list(order = c(1, 1, 1), period = 10))
-
+                                order = c(0, 2, 1))
   # forecasting with ARIMA
   colombia_forecast_values <- forecast(colombia_arima_model, h = nrow(colombia_test_data))
   
@@ -295,7 +354,6 @@ for (i in seq_along(colombia_folds$splits)) {
   colombia_rmse_results[i] <- sqrt(mean(colombia_errors^2))
   colombia_mae_results[i] <- mean(abs(colombia_errors))
   colombia_mse_results[i] <- mean(colombia_errors^2)
-  colombia_mape_results[i] <- mean(abs(colombia_errors / colombia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   colombia_mean_train_diff <- mean(abs(diff(colombia_train_data$owid_new_deaths)))
@@ -306,7 +364,6 @@ for (i in seq_along(colombia_folds$splits)) {
 print(paste("RMSE:", mean(colombia_rmse_results)))
 print(paste("MAE:", mean(colombia_mae_results)))
 print(paste("MSE:", mean(colombia_mse_results)))
-print(paste("MAPE:", mean(colombia_mape_results)))
 print(paste("MASE:", mean(colombia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -338,10 +395,8 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 # iran ----
 
-
 ## load data ----
 load("data/preprocessed/univariate/not_split/iran.rda")
-
 
 ## splitting into training and testing sets----
 
@@ -371,7 +426,6 @@ iran_folds %>% tk_time_series_cv_plan() %>%
 iran_rmse_results <- numeric(length(iran_folds$splits))
 iran_mae_results <- numeric(length(iran_folds$splits))
 iran_mse_results <- numeric(length(iran_folds$splits))
-iran_mape_results <- numeric(length(iran_folds$splits))
 iran_mase_results <- numeric(length(iran_folds$splits))
 
 # fitting to model and calculating metrics
@@ -382,8 +436,7 @@ for (i in seq_along(iran_folds$splits)) {
   
   # fitting to ARIMA model
   iran_arima_model <- arima(iran_train_data$owid_new_deaths,
-                                order = c(1, 1, 0),
-                                seasonal = list(order = c(1, 1, 0), period = 10))
+                            order = c(2, 2, 0))
   
   # forecasting with ARIMA
   iran_forecast_values <- forecast(iran_arima_model, h = nrow(iran_test_data))
@@ -396,7 +449,6 @@ for (i in seq_along(iran_folds$splits)) {
   iran_rmse_results[i] <- sqrt(mean(iran_errors^2))
   iran_mae_results[i] <- mean(abs(iran_errors))
   iran_mse_results[i] <- mean(iran_errors^2)
-  iran_mape_results[i] <- mean(abs(iran_errors / iran_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   iran_mean_train_diff <- mean(abs(diff(iran_train_data$owid_new_deaths)))
@@ -407,7 +459,6 @@ for (i in seq_along(iran_folds$splits)) {
 print(paste("RMSE:", mean(iran_rmse_results)))
 print(paste("MAE:", mean(iran_mae_results)))
 print(paste("MSE:", mean(iran_mse_results)))
-print(paste("MAPE:", mean(iran_mape_results)))
 print(paste("MASE:", mean(iran_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -438,7 +489,6 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 # mexico ----
-
 
 ## load data ----
 load("data/preprocessed/univariate/not_split/mexico.rda")
@@ -472,7 +522,6 @@ mexico_folds %>% tk_time_series_cv_plan() %>%
 mexico_rmse_results <- numeric(length(mexico_folds$splits))
 mexico_mae_results <- numeric(length(mexico_folds$splits))
 mexico_mse_results <- numeric(length(mexico_folds$splits))
-mexico_mape_results <- numeric(length(mexico_folds$splits))
 mexico_mase_results <- numeric(length(mexico_folds$splits))
 
 # fitting to model and calculating metrics
@@ -483,8 +532,7 @@ for (i in seq_along(mexico_folds$splits)) {
   
   # fitting to ARIMA model
   mexico_arima_model <- arima(mexico_train_data$owid_new_deaths,
-                            order = c(1, 0, 0),
-                            seasonal = list(order = c(1, 1, 0), period = 13))
+                              order = c(0, 0, 0))
   
   # forecasting with ARIMA
   mexico_forecast_values <- forecast(mexico_arima_model, h = nrow(mexico_test_data))
@@ -497,7 +545,6 @@ for (i in seq_along(mexico_folds$splits)) {
   mexico_rmse_results[i] <- sqrt(mean(mexico_errors^2))
   mexico_mae_results[i] <- mean(abs(mexico_errors))
   mexico_mse_results[i] <- mean(mexico_errors^2)
-  mexico_mape_results[i] <- mean(abs(mexico_errors / mexico_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   mexico_mean_train_diff <- mean(abs(diff(mexico_train_data$owid_new_deaths)))
@@ -508,7 +555,6 @@ for (i in seq_along(mexico_folds$splits)) {
 print(paste("RMSE:", mean(mexico_rmse_results)))
 print(paste("MAE:", mean(mexico_mae_results)))
 print(paste("MSE:", mean(mexico_mse_results)))
-print(paste("MAPE:", mean(mexico_mape_results)))
 print(paste("MASE:", mean(mexico_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -521,7 +567,6 @@ mexico_fitted_values <- pmax(mexico_fitted_values, 0)
 mexico_all_dates <- c(mexico_train_data$date, mexico_test_data$date)
 mexico_all_values <- c(mexico_train_data$owid_new_deaths, mexico_test_data$owid_new_deaths)
 
-
 ## producing a plot ----
 
 # plotting actual values for both training and test data
@@ -532,6 +577,74 @@ lines(mexico_test_data$date, mexico_forecast_values$mean, col = "blue", lty = 2,
 
 # plotting fitted training data
 lines(mexico_train_data$date, mexico_fitted_values, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
+
+
+## applying SARIMA model ----
+
+# creating metrics vector
+mexico_rmse_results_sarima <- numeric(length(mexico_folds$splits))
+mexico_mae_results_sarima <- numeric(length(mexico_folds$splits))
+mexico_mse_results_sarima <- numeric(length(mexico_folds$splits))
+mexico_mase_results_sarima <- numeric(length(mexico_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(mexico_folds$splits)) {
+  fold <- mexico_folds$splits[[i]]
+  mexico_train_data <- fold$data[fold$in_id, ]
+  mexico_test_data <- fold$data[fold$out_id, ]
+  
+  # fitting to ARIMA model
+  mexico_sarima_model <- arima(mexico_train_data$owid_new_deaths,
+                              order = c(0, 0, 0),
+                              seasonal = list(order = c(1, 1, 0), period = 7))
+  
+  # forecasting with ARIMA
+  mexico_forecast_values_sarima <- forecast(mexico_sarima_model, h = nrow(mexico_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  mexico_forecast_values_sarima$mean <- pmax(mexico_forecast_values_sarima$mean, 0)
+  
+  # calculating evaluation metrics
+  mexico_errors_sarima <- mexico_forecast_values_sarima$mean - mexico_test_data$owid_new_deaths
+  mexico_rmse_results_sarima[i] <- sqrt(mean(mexico_errors_sarima^2))
+  mexico_mae_results_sarima[i] <- mean(abs(mexico_errors_sarima))
+  mexico_mse_results_sarima[i] <- mean(mexico_errors_sarima^2)
+  
+  # calculating MASE
+  mexico_mean_train_diff_sarima <- mean(abs(diff(mexico_train_data$owid_new_deaths)))
+  mexico_mase_results_sarima[i] <- mean(abs(mexico_errors_sarima)) / mexico_mean_train_diff_sarima
+}
+
+# printing metrics
+print(paste("RMSE:", mean(mexico_rmse_results_sarima)))
+print(paste("MAE:", mean(mexico_mae_results_sarima)))
+print(paste("MSE:", mean(mexico_mse_results_sarima)))
+print(paste("MASE:", mean(mexico_mase_results_sarima)))
+
+# retrieving the fitted values for the training set
+mexico_fitted_values_sarima <- fitted(mexico_sarima_model)
+
+# enforcing non-negativity on fitted values
+mexico_fitted_values_sarima <- pmax(mexico_fitted_values_sarima, 0)
+
+# combining training and test data for plotting
+mexico_all_dates <- c(mexico_train_data$date, mexico_test_data$date)
+mexico_all_values <- c(mexico_train_data$owid_new_deaths, mexico_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(mexico_all_dates, mexico_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(mexico_test_data$date, mexico_forecast_values_sarima$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(mexico_train_data$date, mexico_fitted_values_sarima, col = "red", lty = 1, lwd = 2)
 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
@@ -573,7 +686,6 @@ peru_folds %>% tk_time_series_cv_plan() %>%
 peru_rmse_results <- numeric(length(peru_folds$splits))
 peru_mae_results <- numeric(length(peru_folds$splits))
 peru_mse_results <- numeric(length(peru_folds$splits))
-peru_mape_results <- numeric(length(peru_folds$splits))
 peru_mase_results <- numeric(length(peru_folds$splits))
 
 # fitting to model and calculating metrics
@@ -584,8 +696,7 @@ for (i in seq_along(peru_folds$splits)) {
   
   # fitting to ARIMA model
   peru_arima_model <- arima(peru_train_data$owid_new_deaths,
-                              order = c(0, 1, 1),
-                              seasonal = list(order = c(0, 1, 1), period = 3))
+                            order = c(2, 1, 0))
   
   # forecasting with ARIMA
   peru_forecast_values <- forecast(peru_arima_model, h = nrow(peru_test_data))
@@ -598,7 +709,6 @@ for (i in seq_along(peru_folds$splits)) {
   peru_rmse_results[i] <- sqrt(mean(peru_errors^2))
   peru_mae_results[i] <- mean(abs(peru_errors))
   peru_mse_results[i] <- mean(peru_errors^2)
-  peru_mape_results[i] <- mean(abs(peru_errors / peru_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   peru_mean_train_diff <- mean(abs(diff(peru_train_data$owid_new_deaths)))
@@ -609,7 +719,6 @@ for (i in seq_along(peru_folds$splits)) {
 print(paste("RMSE:", mean(peru_rmse_results)))
 print(paste("MAE:", mean(peru_mae_results)))
 print(paste("MSE:", mean(peru_mse_results)))
-print(paste("MAPE:", mean(peru_mape_results)))
 print(paste("MASE:", mean(peru_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -674,7 +783,6 @@ russia_folds %>% tk_time_series_cv_plan() %>%
 russia_rmse_results <- numeric(length(russia_folds$splits))
 russia_mae_results <- numeric(length(russia_folds$splits))
 russia_mse_results <- numeric(length(russia_folds$splits))
-russia_mape_results <- numeric(length(russia_folds$splits))
 russia_mase_results <- numeric(length(russia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -685,8 +793,7 @@ for (i in seq_along(russia_folds$splits)) {
   
   # fitting to ARIMA model
   russia_arima_model <- arima(russia_train_data$owid_new_deaths,
-                            order = c(1, 1, 0),
-                            seasonal = list(order = c(0, 1, 0), period = 2))
+                              order = c(1, 2, 2))
   
   # forecasting with ARIMA
   russia_forecast_values <- forecast(russia_arima_model, h = nrow(russia_test_data))
@@ -699,7 +806,6 @@ for (i in seq_along(russia_folds$splits)) {
   russia_rmse_results[i] <- sqrt(mean(russia_errors^2))
   russia_mae_results[i] <- mean(abs(russia_errors))
   russia_mse_results[i] <- mean(russia_errors^2)
-  russia_mape_results[i] <- mean(abs(russia_errors / russia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   russia_mean_train_diff <- mean(abs(diff(russia_train_data$owid_new_deaths)))
@@ -710,7 +816,6 @@ for (i in seq_along(russia_folds$splits)) {
 print(paste("RMSE:", mean(russia_rmse_results)))
 print(paste("MAE:", mean(russia_mae_results)))
 print(paste("MSE:", mean(russia_mse_results)))
-print(paste("MAPE:", mean(russia_mape_results)))
 print(paste("MASE:", mean(russia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -738,6 +843,73 @@ lines(russia_train_data$date, russia_fitted_values, col = "red", lty = 1, lwd = 
 # adding legend
 legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
+
+## applying SARIMA model ----
+
+# creating metrics vector
+russia_rmse_results_sarima <- numeric(length(russia_folds$splits))
+russia_mae_results_sarima <- numeric(length(russia_folds$splits))
+russia_mse_results_sarima <- numeric(length(russia_folds$splits))
+russia_mase_results_sarima <- numeric(length(russia_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(russia_folds$splits)) {
+  fold <- russia_folds$splits[[i]]
+  russia_train_data <- fold$data[fold$in_id, ]
+  russia_test_data <- fold$data[fold$out_id, ]
+  
+  # fitting to ARIMA model
+  russia_sarima_model <- arima(russia_train_data$owid_new_deaths,
+                               order = c(2, 2, 0),
+                               seasonal = list(order = c(1, 1, 1), period = 7))
+  
+  # forecasting with ARIMA
+  russia_forecast_values_sarima <- forecast(russia_sarima_model, h = nrow(russia_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  russia_forecast_values_sarima$mean <- pmax(russia_forecast_values_sarima$mean, 0)
+  
+  # calculating evaluation metrics
+  russia_errors_sarima <- russia_forecast_values_sarima$mean - russia_test_data$owid_new_deaths
+  russia_rmse_results_sarima[i] <- sqrt(mean(russia_errors_sarima^2))
+  russia_mae_results_sarima[i] <- mean(abs(russia_errors_sarima))
+  russia_mse_results_sarima[i] <- mean(russia_errors_sarima^2)
+  
+  # calculating MASE
+  russia_mean_train_diff_sarima <- mean(abs(diff(russia_train_data$owid_new_deaths)))
+  russia_mase_results_sarima[i] <- mean(abs(russia_errors_sarima)) / russia_mean_train_diff_sarima
+}
+
+# printing metrics
+print(paste("RMSE:", mean(russia_rmse_results_sarima)))
+print(paste("MAE:", mean(russia_mae_results_sarima)))
+print(paste("MSE:", mean(russia_mse_results_sarima)))
+print(paste("MASE:", mean(russia_mase_results_sarima)))
+
+# retrieving the fitted values for the training set
+russia_fitted_values_sarima <- fitted(russia_sarima_model)
+
+# enforcing non-negativity on fitted values
+russia_fitted_values_sarima <- pmax(russia_fitted_values_sarima, 0)
+
+# combining training and test data for plotting
+russia_all_dates <- c(russia_train_data$date, russia_test_data$date)
+russia_all_values <- c(russia_train_data$owid_new_deaths, russia_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(russia_all_dates, russia_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(russia_test_data$date, russia_forecast_values_sarima$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(russia_train_data$date, russia_fitted_values_sarima, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
 
 
 
@@ -776,7 +948,6 @@ saudi_folds %>% tk_time_series_cv_plan() %>%
 saudi_rmse_results <- numeric(length(saudi_folds$splits))
 saudi_mae_results <- numeric(length(saudi_folds$splits))
 saudi_mse_results <- numeric(length(saudi_folds$splits))
-saudi_mape_results <- numeric(length(saudi_folds$splits))
 saudi_mase_results <- numeric(length(saudi_folds$splits))
 
 # fitting to model and calculating metrics
@@ -787,8 +958,8 @@ for (i in seq_along(saudi_folds$splits)) {
   
   # fitting to ARIMA model
   saudi_arima_model <- arima(saudi_train_data$owid_new_deaths,
-                              order = c(1, 1, 0),
-                              seasonal = list(order = c(1, 1, 0), period = 3))
+                             order = c(1, 1, 0),
+                             seasonal = list(order = c(1, 2, 2), period = 3))
   
   # forecasting with ARIMA
   saudi_forecast_values <- forecast(saudi_arima_model, h = nrow(saudi_test_data))
@@ -801,7 +972,6 @@ for (i in seq_along(saudi_folds$splits)) {
   saudi_rmse_results[i] <- sqrt(mean(saudi_errors^2))
   saudi_mae_results[i] <- mean(abs(saudi_errors))
   saudi_mse_results[i] <- mean(saudi_errors^2)
-  saudi_mape_results[i] <- mean(abs(saudi_errors / saudi_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   saudi_mean_train_diff <- mean(abs(diff(saudi_train_data$owid_new_deaths)))
@@ -812,7 +982,6 @@ for (i in seq_along(saudi_folds$splits)) {
 print(paste("RMSE:", mean(saudi_rmse_results)))
 print(paste("MAE:", mean(saudi_mae_results)))
 print(paste("MSE:", mean(saudi_mse_results)))
-print(paste("MAPE:", mean(saudi_mape_results)))
 print(paste("MASE:", mean(saudi_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -877,7 +1046,6 @@ turkey_folds %>% tk_time_series_cv_plan() %>%
 turkey_rmse_results <- numeric(length(turkey_folds$splits))
 turkey_mae_results <- numeric(length(turkey_folds$splits))
 turkey_mse_results <- numeric(length(turkey_folds$splits))
-turkey_mape_results <- numeric(length(turkey_folds$splits))
 turkey_mase_results <- numeric(length(turkey_folds$splits))
 
 # fitting to model and calculating metrics
@@ -888,8 +1056,7 @@ for (i in seq_along(turkey_folds$splits)) {
   
   # fitting to ARIMA model
   turkey_arima_model <- arima(turkey_train_data$owid_new_deaths,
-                             order = c(0, 1, 0),
-                             seasonal = list(order = c(0, 1, 0), period = 1))
+                              order = c(0, 2, 0))
   
   # forecasting with ARIMA
   turkey_forecast_values <- forecast(turkey_arima_model, h = nrow(turkey_test_data))
@@ -902,7 +1069,6 @@ for (i in seq_along(turkey_folds$splits)) {
   turkey_rmse_results[i] <- sqrt(mean(turkey_errors^2))
   turkey_mae_results[i] <- mean(abs(turkey_errors))
   turkey_mse_results[i] <- mean(turkey_errors^2)
-  turkey_mape_results[i] <- mean(abs(turkey_errors / turkey_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   turkey_mean_train_diff <- mean(abs(diff(turkey_train_data$owid_new_deaths)))
@@ -913,7 +1079,6 @@ for (i in seq_along(turkey_folds$splits)) {
 print(paste("RMSE:", mean(turkey_rmse_results)))
 print(paste("MAE:", mean(turkey_mae_results)))
 print(paste("MSE:", mean(turkey_mse_results)))
-print(paste("MAPE:", mean(turkey_mape_results)))
 print(paste("MASE:", mean(turkey_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -978,7 +1143,6 @@ us_folds %>% tk_time_series_cv_plan() %>%
 us_rmse_results <- numeric(length(us_folds$splits))
 us_mae_results <- numeric(length(us_folds$splits))
 us_mse_results <- numeric(length(us_folds$splits))
-us_mape_results <- numeric(length(us_folds$splits))
 us_mase_results <- numeric(length(us_folds$splits))
 
 # fitting to model and calculating metrics
@@ -989,8 +1153,7 @@ for (i in seq_along(us_folds$splits)) {
   
   # fitting to ARIMA model
   us_arima_model <- arima(us_train_data$owid_new_deaths,
-                              order = c(0, 0, 0),
-                              seasonal = list(order = c(1, 1, 1), period = 7))
+                          order = c(2, 0, 2))
   
   # forecasting with ARIMA
   us_forecast_values <- forecast(us_arima_model, h = nrow(us_test_data))
@@ -1003,7 +1166,6 @@ for (i in seq_along(us_folds$splits)) {
   us_rmse_results[i] <- sqrt(mean(us_errors^2))
   us_mae_results[i] <- mean(abs(us_errors))
   us_mse_results[i] <- mean(us_errors^2)
-  us_mape_results[i] <- mean(abs(us_errors / us_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   us_mean_train_diff <- mean(abs(diff(us_train_data$owid_new_deaths)))
@@ -1014,7 +1176,6 @@ for (i in seq_along(us_folds$splits)) {
 print(paste("RMSE:", mean(us_rmse_results)))
 print(paste("MAE:", mean(us_mae_results)))
 print(paste("MSE:", mean(us_mse_results)))
-print(paste("MAPE:", mean(us_mape_results)))
 print(paste("MASE:", mean(us_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -1044,101 +1205,127 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
-# # finding best parameters per country ----
-# 
-# ## load data ----
-# load("data/preprocessed/univariate/not_split/us.rda")
-# 
-# 
-# ## splitting into training and testing sets ----
-# 
-# # calculating the number of dates for time_series_cv parameters
-# total_days <- nrow(us)
-# train_days <- ceiling(0.9 * total_days)
-# test_days <- ceiling((total_days - train_days))
-# 
-# # creating folds
-# us_folds <- time_series_cv(
-#   us,
-#   date_var = date,
-#   initial = train_days,
-#   assess = test_days,
-#   fold = 1,
-#   slice_limit = 1)
-# 
-# # filtering by slice
-# us_folds %>% tk_time_series_cv_plan() %>%
-#   filter(.id == "Slice2") %>%
-#   nrow()
-# 
-# # defining grid of parameter values to search over
-# orders <- c(0, 1, 2)
-# seasonals <- list(order = c(0, 1), period = 7)
+## applying SARIMA model ----
+
+# creating metrics vector
+us_rmse_results_sarima <- numeric(length(us_folds$splits))
+us_mae_results_sarima <- numeric(length(us_folds$splits))
+us_mse_results_sarima <- numeric(length(us_folds$splits))
+us_mase_results_sarima <- numeric(length(us_folds$splits))
+
+# fitting to model and calculating metrics
+for (i in seq_along(us_folds$splits)) {
+  fold <- us_folds$splits[[i]]
+  us_train_data <- fold$data[fold$in_id, ]
+  us_test_data <- fold$data[fold$out_id, ]
+  
+  # fitting to ARIMA model
+  us_sarima_model <- arima(us_train_data$owid_new_deaths,
+                               order = c(0, 0, 0),
+                               seasonal = list(order = c(1, 1, 1), period = 7))
+  
+  # forecasting with ARIMA
+  us_forecast_values_sarima <- forecast(us_sarima_model, h = nrow(us_test_data))
+  
+  # enforcing non-negativity on forecasted values
+  us_forecast_values_sarima$mean <- pmax(us_forecast_values_sarima$mean, 0)
+  
+  # calculating evaluation metrics
+  us_errors_sarima <- us_forecast_values_sarima$mean - us_test_data$owid_new_deaths
+  us_rmse_results_sarima[i] <- sqrt(mean(us_errors_sarima^2))
+  us_mae_results_sarima[i] <- mean(abs(us_errors_sarima))
+  us_mse_results_sarima[i] <- mean(us_errors_sarima^2)
+  
+  # calculating MASE
+  us_mean_train_diff_sarima <- mean(abs(diff(us_train_data$owid_new_deaths)))
+  us_mase_results_sarima[i] <- mean(abs(us_errors_sarima)) / us_mean_train_diff_sarima
+}
+
+# printing metrics
+print(paste("RMSE:", mean(us_rmse_results_sarima)))
+print(paste("MAE:", mean(us_mae_results_sarima)))
+print(paste("MSE:", mean(us_mse_results_sarima)))
+print(paste("MASE:", mean(us_mase_results_sarima)))
+
+# retrieving the fitted values for the training set
+us_fitted_values_sarima <- fitted(us_sarima_model)
+
+# enforcing non-negativity on fitted values
+us_fitted_values_sarima <- pmax(us_fitted_values_sarima, 0)
+
+# combining training and test data for plotting
+us_all_dates <- c(us_train_data$date, us_test_data$date)
+us_all_values <- c(us_train_data$owid_new_deaths, us_test_data$owid_new_deaths)
+
+
+## producing a plot ----
+
+# plotting actual values for both training and test data
+plot(us_all_dates, us_all_values, type = "l", col = "black", lwd = 2, xlab = "Date", ylab = "New Deaths")
+
+# plotting the forecasted values for test data
+lines(us_test_data$date, us_forecast_values_sarima$mean, col = "blue", lty = 2, lwd = 2)
+
+# plotting fitted training data
+lines(us_train_data$date, us_fitted_values_sarima, col = "red", lty = 1, lwd = 2)
+
+# adding legend
+legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("black", "blue", "red"), lty = c(1, 2, 1), lwd = 2)
+
+
+
+# # finding best ARIMA parameters per country (changed variable names for reuse - switching countries) ----
 # 
 # # initializing parameters
 # min_rmse <- Inf
 # best_order <- NULL
 # best_seasonal <- NULL
 # 
-# # iterating over all combinations
-# for (order_i in c(0, 1)) {
-#   for (order_ii in c(0, 1)) {
-#     for (order_iii in c(0, 1)) {
-#       for (seasonal_order_i in c(0, 1)) {
-#         for (seasonal_order_ii in c(0, 1)) {
-#           for (seasonal_order_iii in c(0, 1)) {
-#             for (seasonal_period in 1:14) {
-#               seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
-#                                period = seasonal_period)
-# 
-#               # initializing vectors to store RMSE
-#               rmse_results <- numeric(length(us_folds$splits))
-# 
-#               # fitting to model and calculating metrics
-#               for (i in seq_along(us_folds$splits)) {
-#                 fold <- us_folds$splits[[i]]
-#                 train_data <- fold$data[fold$in_id, ]
-#                 test_data <- fold$data[fold$out_id, ]
-# 
-#                 # fitting to ARIMA
-#                 arima_model <- tryCatch({
-#                   arima(train_data$owid_new_deaths,
-#                         order = c(order_i, order_ii, order_iii), # Use dynamic order
-#                         seasonal = seasonal)
-#                 }, error = function(e) {
-#                   NULL
-#                 })
-# 
-#                 if (!is.null(arima_model)) {
-# 
-#                   # forecasting with ARIMA
-#                   forecast_values <- forecast(arima_model, h = nrow(test_data))
-# 
-#                   # enforcing non-negativity on forecasted values
-#                   forecast_values$mean <- pmax(forecast_values$mean, 0)
-# 
-#                   # computing RMSE
-#                   errors <- forecast_values$mean - test_data$owid_new_deaths
-#                   rmse_results[i] <- sqrt(mean(errors^2))
-#                 } else {
-# 
-#                   # setting RMSE to Inf if model fails
-#                   rmse_results[i] <- Inf
-#                 }
-#               }
-# 
-#               # calculating average folds RMSE
-#               avg_rmse <- mean(rmse_results, na.rm = TRUE)
-# 
-#               # checking if current combo results in lower RMSE
-#               if (avg_rmse < min_rmse) {
-#                 min_rmse <- avg_rmse
-#                 best_order <- c(order_i, order_ii, order_iii)
-#                 best_seasonal <- seasonal
-#               }
-#             }
-#           }
+# # iterating over all combinations without a seasonal component
+# for (order_i in c(0, 1, 2)) {
+#   for (order_ii in c(0, 1, 2)) {
+#     for (order_iii in c(0, 1, 2)) {
+#       
+#       # initializing vectors to store RMSE
+#       rmse_results <- numeric(length(us_folds$splits))
+#       
+#       # fitting to model and calculating metrics
+#       for (i in seq_along(us_folds$splits)) {
+#         fold <- us_folds$splits[[i]]
+#         train_data <- fold$data[fold$in_id, ]
+#         test_data <- fold$data[fold$out_id, ]
+#         
+#         # fitting to ARIMA without a seasonal component
+#         arima_model <- tryCatch({
+#           arima(train_data$owid_new_deaths,
+#                 order = c(order_i, order_ii, order_iii))
+#         }, error = function(e) {
+#           NULL
+#         })
+#         
+#         if (!is.null(arima_model)) {
+#           # forecasting with ARIMA
+#           forecast_values <- forecast(arima_model, h = nrow(test_data))
+#           
+#           # enforcing non-negativity on forecasted values
+#           forecast_values$mean <- pmax(forecast_values$mean, 0)
+#           
+#           # computing RMSE
+#           errors <- forecast_values$mean - test_data$owid_new_deaths
+#           rmse_results[i] <- sqrt(mean(errors^2))
+#         } else {
+#           # setting RMSE to Inf if model fitting fails
+#           rmse_results[i] <- Inf
 #         }
+#       }
+#       
+#       # calculating average folds RMSE
+#       avg_rmse <- mean(rmse_results, na.rm = TRUE)
+#       
+#       # checking if current combo results in lower RMSE
+#       if (avg_rmse < min_rmse) {
+#         min_rmse <- avg_rmse
+#         best_order <- c(order_i, order_ii, order_iii)
 #       }
 #     }
 #   }
@@ -1147,8 +1334,93 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 # # printing lowest RMSE and best parameters
 # cat("Minimum RMSE:", min_rmse, "\n")
 # cat("Best order:", best_order, "\n")
-# cat("Best seasonal:", best_seasonal$order, "\n")
-# cat("Best seasonal period:", best_seasonal$period, "\n")
+
+
+
+# finding best SARIMA parameters per country ----
+
+# initializing parameters
+min_rmse <- Inf
+best_order <- NULL
+best_seasonal <- NULL
+
+# iterating over all combinations
+for (order_i in c(0, 1, 2)) {
+  for (order_ii in c(0, 1, 2)) {
+    for (order_iii in c(0, 1, 2)) {
+      for (seasonal_order_i in c(0, 1)) {
+        for (seasonal_order_ii in c(0, 1)) {
+          for (seasonal_order_iii in c(0, 1)) {
+            for (seasonal_period in c(7)) {
+              seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
+                               period = seasonal_period)
+
+              # initializing vectors to store RMSE
+              rmse_results <- numeric(length(us_folds$splits))
+
+              # fitting to model and calculating metrics
+              for (i in seq_along(us_folds$splits)) {
+                fold <- us_folds$splits[[i]]
+                train_data <- fold$data[fold$in_id, ]
+                test_data <- fold$data[fold$out_id, ]
+
+                # fitting to ARIMA
+                sarima_model <- tryCatch({
+                  arima(train_data$owid_new_deaths,
+                        order = c(order_i, order_ii, order_iii), # Use dynamic order
+                        seasonal = seasonal)
+                }, error = function(e) {
+                  NULL
+                })
+
+                if (!is.null(sarima_model)) {
+
+                  # forecasting with ARIMA
+                  forecast_values <- forecast(sarima_model, h = nrow(test_data))
+
+                  # enforcing non-negativity on forecasted values
+                  forecast_values$mean <- pmax(forecast_values$mean, 0)
+
+                  # computing RMSE
+                  errors <- forecast_values$mean - test_data$owid_new_deaths
+                  rmse_results[i] <- sqrt(mean(errors^2))
+                } else {
+
+                  # setting RMSE to Inf if model fails
+                  rmse_results[i] <- Inf
+                }
+              }
+
+              # calculating average folds RMSE
+              avg_rmse <- mean(rmse_results, na.rm = TRUE)
+
+              # checking if current combo results in lower RMSE
+              if (avg_rmse < min_rmse) {
+                min_rmse <- avg_rmse
+                best_order <- c(order_i, order_ii, order_iii)
+                best_seasonal <- seasonal
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# printing lowest RMSE and best parameters
+cat("Minimum RMSE:", min_rmse, "\n")
+cat("Best order:", best_order, "\n")
+cat("Best seasonal:", best_seasonal$order, "\n")
+cat("Best seasonal period:", best_seasonal$period, "\n")
+
+
+
+
+
+# YOU STOPPED HERE ----
+
+
 
 
 
@@ -1300,17 +1572,11 @@ metrics_list <- list()
 for (country in c("bolivia", "brazil", "colombia", "iran",
                   "mexico", "peru", "russia", "saudi", "turkey", "us")) {
 
-  # simulating the calculation of metrics
+    # simulating the calculation of metrics
   rmse <- mean(get(paste0(country, "_rmse_results")))
   mae <- mean(get(paste0(country, "_mae_results")))
   mse <- mean(get(paste0(country, "_mse_results")))
-  mape <- mean(get(paste0(country, "_mape_results")))
   mase <- mean(get(paste0(country, "_mase_results")))
-  
-  # handling division by zero for MAPE and checking for NA
-  if (!is.na(mape) && mape == Inf) {
-    mape <- NA
-  }
   
   # creating a data frame for the country's metrics
   if (tolower(country) == "us") {
@@ -1319,7 +1585,6 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
       RMSE = rmse,
       MAE = mae,
       MSE = mse,
-      MAPE = mape,
       MASE = mase
     )
   } else {
@@ -1328,7 +1593,6 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
       RMSE = rmse,
       MAE = mae,
       MSE = mse,
-      MAPE = mape,
       MASE = mase
     )
   }
@@ -1341,7 +1605,7 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
 all_metrics_df <- do.call(rbind, metrics_list)
 
 # rounding the metrics to 3 decimal points + handling NAs
-num_cols <- c("RMSE", "MAE", "MSE", "MAPE", "MASE")
+num_cols <- c("RMSE", "MAE", "MSE", "MASE")
 all_metrics_df[num_cols] <- lapply(all_metrics_df[num_cols], function(x) {
   ifelse(is.na(x), NA, round(x, 3))
 })
@@ -1364,7 +1628,8 @@ countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russi
 
 # looping to calculate training metrics
 for (country in countries) {
-  # Get the actual and fitted values
+  
+  # getting the actual and fitted values
   actual_values <- get(paste0(country, "_train_data"))$owid_new_deaths
   fitted_values <- get(paste0(country, "_fitted_values"))
   
@@ -1393,7 +1658,7 @@ for (country in countries) {
   avg_train_mae <- round(train_metrics_list[[paste0(country, "_train_mae")]], 3)
   avg_train_mse <- round(train_metrics_list[[paste0(country, "_train_mse")]], 3)
   
-  # retrievingaverage testing metrics
+  # retrieving average testing metrics
   avg_test_rmse <- round(mean(get(paste0(country, "_rmse_results"))), 3)
   avg_test_mae <- round(mean(get(paste0(country, "_mae_results"))), 3)
   avg_test_mse <- round(mean(get(paste0(country, "_mse_results"))), 3)
@@ -1447,9 +1712,7 @@ print(all_comparisons_df %>% DT::datatable(options = list(pageLength = 10)))
 # placeholder for skewedness
 skewness_values <- list()
 transformation_advice <- list()
-
 countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
-
 for (country in countries) {
   
   # replacing these placeholders with variable names
@@ -1509,14 +1772,10 @@ calculate_metrics <- function(forecasted, actual, train) {
   errors <- forecasted - actual
   train_diff <- mean(abs(diff(train)))
   
-  # adding a small epsilon (division by zero in MAPE)
-  epsilon <- 1e-8
-  
   list(
     RMSE = sqrt(mean(errors^2)),
     MAE = mean(abs(errors)),
     MSE = mean(errors^2),
-    MAPE = mean(abs(errors / (actual + epsilon)), na.rm = TRUE) * 100,
     MASE = mean(abs(errors)) / train_diff
   )
 }
@@ -1558,7 +1817,6 @@ for (country_name in country_names) {
     RMSE = c(arima_metrics$RMSE, auto_metrics$RMSE),
     MAE = c(arima_metrics$MAE, auto_metrics$MAE),
     MSE = c(arima_metrics$MSE, auto_metrics$MSE),
-    MAPE = c(arima_metrics$MAPE, auto_metrics$MAPE),
     MASE = c(arima_metrics$MASE, auto_metrics$MASE)
   )
   
@@ -1571,14 +1829,13 @@ for (country_name in country_names) {
 
 # combining all metrics into one data frame
 arima_final_metrics_df <- do.call(rbind, all_countries_metrics)
-
 arima_final_metrics_df <- arima_final_metrics_df %>%
   group_by(Country) %>%
   slice_min(order_by = RMSE, with_ties = FALSE) %>%
   ungroup()
 
 arima_final_metrics_df <- arima_final_metrics_df %>%
-  mutate(across(c(RMSE, MAE, MSE, MAPE, MASE), round, 3))
+  mutate(across(c(RMSE, MAE, MSE, MASE), round, 3))
 
 arima_final_metrics_df %>% 
   DT::datatable()
@@ -1638,7 +1895,10 @@ for (country_name in country_names) {
     RMSE = round(auto_metrics$RMSE, 3),
     MAE = round(auto_metrics$MAE, 3),
     MSE = round(auto_metrics$MSE, 3),
+<<<<<<< HEAD
     MAPE = round(auto_metrics$MAPE, 3),
+=======
+>>>>>>> main
     MASE = round(auto_metrics$MASE, 3)
   )
   
@@ -1656,4 +1916,8 @@ row.names(auto_arima_final_metrics_df) <- NULL
 
 # saving files ----
 save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
+<<<<<<< HEAD
 save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda")
+=======
+save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda") 
+>>>>>>> main
