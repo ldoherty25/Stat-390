@@ -1,6 +1,5 @@
 ## ARIMA and Auto-ARIMA
-
-# Fitting and hyperparameter tuning is done in the 
+## Cross-validation and hyperparameter tuning are performed in document 1b.
 
 
 # primary checks ----
