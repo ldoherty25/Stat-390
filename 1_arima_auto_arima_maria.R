@@ -80,7 +80,7 @@ for (i in seq_along(bolivia_folds$splits)) {
   
   # fitting to ARIMA model
   bolivia_arima_model <- arima(bolivia_train_data$owid_new_deaths,
-                               order = c(1, 1, 0))
+                              order = c(2, 1, 0))
   
   # forecasting with ARIMA
   bolivia_forecast_values <- forecast(bolivia_arima_model, h = nrow(bolivia_test_data))
@@ -1274,135 +1274,58 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
-# # finding best ARIMA parameters per country (changed variable names for reuse - switching countries) ----
-# 
-# # initializing parameters
-# min_rmse <- Inf
-# best_order <- NULL
-# best_seasonal <- NULL
-# 
-# # iterating over all combinations without a seasonal component
-# for (order_i in c(0, 1, 2)) {
-#   for (order_ii in c(0, 1, 2)) {
-#     for (order_iii in c(0, 1, 2)) {
-#       
-#       # initializing vectors to store RMSE
-#       rmse_results <- numeric(length(us_folds$splits))
-#       
-#       # fitting to model and calculating metrics
-#       for (i in seq_along(us_folds$splits)) {
-#         fold <- us_folds$splits[[i]]
-#         train_data <- fold$data[fold$in_id, ]
-#         test_data <- fold$data[fold$out_id, ]
-#         
-#         # fitting to ARIMA without a seasonal component
-#         arima_model <- tryCatch({
-#           arima(train_data$owid_new_deaths,
-#                 order = c(order_i, order_ii, order_iii))
-#         }, error = function(e) {
-#           NULL
-#         })
-#         
-#         if (!is.null(arima_model)) {
-#           # forecasting with ARIMA
-#           forecast_values <- forecast(arima_model, h = nrow(test_data))
-#           
-#           # enforcing non-negativity on forecasted values
-#           forecast_values$mean <- pmax(forecast_values$mean, 0)
-#           
-#           # computing RMSE
-#           errors <- forecast_values$mean - test_data$owid_new_deaths
-#           rmse_results[i] <- sqrt(mean(errors^2))
-#         } else {
-#           # setting RMSE to Inf if model fitting fails
-#           rmse_results[i] <- Inf
-#         }
-#       }
-#       
-#       # calculating average folds RMSE
-#       avg_rmse <- mean(rmse_results, na.rm = TRUE)
-#       
-#       # checking if current combo results in lower RMSE
-#       if (avg_rmse < min_rmse) {
-#         min_rmse <- avg_rmse
-#         best_order <- c(order_i, order_ii, order_iii)
-#       }
-#     }
-#   }
-# }
-# 
-# # printing lowest RMSE and best parameters
-# cat("Minimum RMSE:", min_rmse, "\n")
-# cat("Best order:", best_order, "\n")
-
-
-
-# finding best SARIMA parameters per country ----
+# finding best ARIMA parameters per country (changed variable names for reuse - switching countries) ----
 
 # initializing parameters
 min_rmse <- Inf
 best_order <- NULL
 best_seasonal <- NULL
 
-# iterating over all combinations
+# iterating over all combinations without a seasonal component
 for (order_i in c(0, 1, 2)) {
   for (order_ii in c(0, 1, 2)) {
     for (order_iii in c(0, 1, 2)) {
-      for (seasonal_order_i in c(0, 1)) {
-        for (seasonal_order_ii in c(0, 1)) {
-          for (seasonal_order_iii in c(0, 1)) {
-            for (seasonal_period in c(7)) {
-              seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
-                               period = seasonal_period)
 
-              # initializing vectors to store RMSE
-              rmse_results <- numeric(length(us_folds$splits))
+      # initializing vectors to store RMSE
+      rmse_results <- numeric(length(bolivia_folds$splits))
 
-              # fitting to model and calculating metrics
-              for (i in seq_along(us_folds$splits)) {
-                fold <- us_folds$splits[[i]]
-                train_data <- fold$data[fold$in_id, ]
-                test_data <- fold$data[fold$out_id, ]
+      # fitting to model and calculating metrics
+      for (i in seq_along(bolivia_folds$splits)) {
+        fold <- bolivia_folds$splits[[i]]
+        train_data <- fold$data[fold$in_id, ]
+        test_data <- fold$data[fold$out_id, ]
 
-                # fitting to ARIMA
-                sarima_model <- tryCatch({
-                  arima(train_data$owid_new_deaths,
-                        order = c(order_i, order_ii, order_iii), # Use dynamic order
-                        seasonal = seasonal)
-                }, error = function(e) {
-                  NULL
-                })
+        # fitting to ARIMA without a seasonal component
+        arima_model <- tryCatch({
+          arima(train_data$owid_new_deaths,
+                order = c(order_i, order_ii, order_iii))
+        }, error = function(e) {
+          NULL
+        })
 
-                if (!is.null(sarima_model)) {
+        if (!is.null(arima_model)) {
+          # forecasting with ARIMA
+          forecast_values <- forecast(arima_model, h = nrow(test_data))
 
-                  # forecasting with ARIMA
-                  forecast_values <- forecast(sarima_model, h = nrow(test_data))
+          # enforcing non-negativity on forecasted values
+          forecast_values$mean <- pmax(forecast_values$mean, 0)
 
-                  # enforcing non-negativity on forecasted values
-                  forecast_values$mean <- pmax(forecast_values$mean, 0)
-
-                  # computing RMSE
-                  errors <- forecast_values$mean - test_data$owid_new_deaths
-                  rmse_results[i] <- sqrt(mean(errors^2))
-                } else {
-
-                  # setting RMSE to Inf if model fails
-                  rmse_results[i] <- Inf
-                }
-              }
-
-              # calculating average folds RMSE
-              avg_rmse <- mean(rmse_results, na.rm = TRUE)
-
-              # checking if current combo results in lower RMSE
-              if (avg_rmse < min_rmse) {
-                min_rmse <- avg_rmse
-                best_order <- c(order_i, order_ii, order_iii)
-                best_seasonal <- seasonal
-              }
-            }
-          }
+          # computing RMSE
+          errors <- forecast_values$mean - test_data$owid_new_deaths
+          rmse_results[i] <- sqrt(mean(errors^2))
+        } else {
+          # setting RMSE to Inf if model fitting fails
+          rmse_results[i] <- Inf
         }
+      }
+
+      # calculating average folds RMSE
+      avg_rmse <- mean(rmse_results, na.rm = TRUE)
+
+      # checking if current combo results in lower RMSE
+      if (avg_rmse < min_rmse) {
+        min_rmse <- avg_rmse
+        best_order <- c(order_i, order_ii, order_iii)
       }
     }
   }
@@ -1411,8 +1334,85 @@ for (order_i in c(0, 1, 2)) {
 # printing lowest RMSE and best parameters
 cat("Minimum RMSE:", min_rmse, "\n")
 cat("Best order:", best_order, "\n")
-cat("Best seasonal:", best_seasonal$order, "\n")
-cat("Best seasonal period:", best_seasonal$period, "\n")
+
+
+
+# # finding best SARIMA parameters per country ----
+# 
+# # initializing parameters
+# min_rmse <- Inf
+# best_order <- NULL
+# best_seasonal <- NULL
+# 
+# # iterating over all combinations
+# for (order_i in c(0, 1, 2)) {
+#   for (order_ii in c(0, 1, 2)) {
+#     for (order_iii in c(0, 1, 2)) {
+#       for (seasonal_order_i in c(0, 1)) {
+#         for (seasonal_order_ii in c(0, 1)) {
+#           for (seasonal_order_iii in c(0, 1)) {
+#             for (seasonal_period in c(7)) {
+#               seasonal <- list(order = c(seasonal_order_i, seasonal_order_ii, seasonal_order_iii),
+#                                period = seasonal_period)
+# 
+#               # initializing vectors to store RMSE
+#               rmse_results <- numeric(length(us_folds$splits))
+# 
+#               # fitting to model and calculating metrics
+#               for (i in seq_along(us_folds$splits)) {
+#                 fold <- us_folds$splits[[i]]
+#                 train_data <- fold$data[fold$in_id, ]
+#                 test_data <- fold$data[fold$out_id, ]
+# 
+#                 # fitting to ARIMA
+#                 sarima_model <- tryCatch({
+#                   arima(train_data$owid_new_deaths,
+#                         order = c(order_i, order_ii, order_iii), # Use dynamic order
+#                         seasonal = seasonal)
+#                 }, error = function(e) {
+#                   NULL
+#                 })
+# 
+#                 if (!is.null(sarima_model)) {
+# 
+#                   # forecasting with ARIMA
+#                   forecast_values <- forecast(sarima_model, h = nrow(test_data))
+# 
+#                   # enforcing non-negativity on forecasted values
+#                   forecast_values$mean <- pmax(forecast_values$mean, 0)
+# 
+#                   # computing RMSE
+#                   errors <- forecast_values$mean - test_data$owid_new_deaths
+#                   rmse_results[i] <- sqrt(mean(errors^2))
+#                 } else {
+# 
+#                   # setting RMSE to Inf if model fails
+#                   rmse_results[i] <- Inf
+#                 }
+#               }
+# 
+#               # calculating average folds RMSE
+#               avg_rmse <- mean(rmse_results, na.rm = TRUE)
+# 
+#               # checking if current combo results in lower RMSE
+#               if (avg_rmse < min_rmse) {
+#                 min_rmse <- avg_rmse
+#                 best_order <- c(order_i, order_ii, order_iii)
+#                 best_seasonal <- seasonal
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+# 
+# # printing lowest RMSE and best parameters
+# cat("Minimum RMSE:", min_rmse, "\n")
+# cat("Best order:", best_order, "\n")
+# cat("Best seasonal:", best_seasonal$order, "\n")
+# cat("Best seasonal period:", best_seasonal$period, "\n")
 
 
 
