@@ -39,6 +39,8 @@ df_with_dummies <- df_with_dummies %>%
   mutate(weekday = as.numeric(as.factor(weekday))) %>%
   mutate(weekday = ifelse(is.na(weekday), 0, weekday))
 
+# removing target variable so it doesn't become part of
+
 
 
 # dataset preparation ----
