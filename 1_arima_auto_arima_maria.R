@@ -68,7 +68,6 @@ bolivia_folds %>% tk_time_series_cv_plan() %>%
 bolivia_rmse_results <- numeric(length(bolivia_folds$splits))
 bolivia_mae_results <- numeric(length(bolivia_folds$splits))
 bolivia_mse_results <- numeric(length(bolivia_folds$splits))
-bolivia_mape_results <- numeric(length(bolivia_folds$splits))
 bolivia_mase_results <- numeric(length(bolivia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -93,7 +92,6 @@ for (i in seq_along(bolivia_folds$splits)) {
   bolivia_rmse_results[i] <- sqrt(mean(bolivia_errors^2))
   bolivia_mae_results[i] <- mean(abs(bolivia_errors))
   bolivia_mse_results[i] <- mean(bolivia_errors^2)
-  bolivia_mape_results[i] <- mean(abs(bolivia_errors / bolivia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   bolivia_mean_train_diff <- mean(abs(diff(bolivia_train_data$owid_new_deaths)))
@@ -104,7 +102,6 @@ for (i in seq_along(bolivia_folds$splits)) {
 print(paste("RMSE:", mean(bolivia_rmse_results)))
 print(paste("MAE:", mean(bolivia_mae_results)))
 print(paste("MSE:", mean(bolivia_mse_results)))
-print(paste("MAPE:", mean(bolivia_mape_results)))
 print(paste("MASE:", mean(bolivia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -169,7 +166,6 @@ brazil_folds %>% tk_time_series_cv_plan() %>%
 brazil_rmse_results <- numeric(length(brazil_folds$splits))
 brazil_mae_results <- numeric(length(brazil_folds$splits))
 brazil_mse_results <- numeric(length(brazil_folds$splits))
-brazil_mape_results <- numeric(length(brazil_folds$splits))
 brazil_mase_results <- numeric(length(brazil_folds$splits))
 
 # fitting to model and calculating metrics
@@ -194,7 +190,6 @@ for (i in seq_along(brazil_folds$splits)) {
   brazil_rmse_results[i] <- sqrt(mean(brazil_errors^2))
   brazil_mae_results[i] <- mean(abs(brazil_errors))
   brazil_mse_results[i] <- mean(brazil_errors^2)
-  brazil_mape_results[i] <- mean(abs(brazil_errors / brazil_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   brazil_mean_train_diff <- mean(abs(diff(brazil_train_data$owid_new_deaths)))
@@ -205,7 +200,6 @@ for (i in seq_along(brazil_folds$splits)) {
 print(paste("RMSE:", mean(brazil_rmse_results)))
 print(paste("MAE:", mean(brazil_mae_results)))
 print(paste("MSE:", mean(brazil_mse_results)))
-print(paste("MAPE:", mean(brazil_mape_results)))
 print(paste("MASE:", mean(brazil_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -270,7 +264,6 @@ colombia_folds %>% tk_time_series_cv_plan() %>%
 colombia_rmse_results <- numeric(length(colombia_folds$splits))
 colombia_mae_results <- numeric(length(colombia_folds$splits))
 colombia_mse_results <- numeric(length(colombia_folds$splits))
-colombia_mape_results <- numeric(length(colombia_folds$splits))
 colombia_mase_results <- numeric(length(colombia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -295,7 +288,6 @@ for (i in seq_along(colombia_folds$splits)) {
   colombia_rmse_results[i] <- sqrt(mean(colombia_errors^2))
   colombia_mae_results[i] <- mean(abs(colombia_errors))
   colombia_mse_results[i] <- mean(colombia_errors^2)
-  colombia_mape_results[i] <- mean(abs(colombia_errors / colombia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   colombia_mean_train_diff <- mean(abs(diff(colombia_train_data$owid_new_deaths)))
@@ -306,7 +298,6 @@ for (i in seq_along(colombia_folds$splits)) {
 print(paste("RMSE:", mean(colombia_rmse_results)))
 print(paste("MAE:", mean(colombia_mae_results)))
 print(paste("MSE:", mean(colombia_mse_results)))
-print(paste("MAPE:", mean(colombia_mape_results)))
 print(paste("MASE:", mean(colombia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -371,7 +362,6 @@ iran_folds %>% tk_time_series_cv_plan() %>%
 iran_rmse_results <- numeric(length(iran_folds$splits))
 iran_mae_results <- numeric(length(iran_folds$splits))
 iran_mse_results <- numeric(length(iran_folds$splits))
-iran_mape_results <- numeric(length(iran_folds$splits))
 iran_mase_results <- numeric(length(iran_folds$splits))
 
 # fitting to model and calculating metrics
@@ -396,7 +386,6 @@ for (i in seq_along(iran_folds$splits)) {
   iran_rmse_results[i] <- sqrt(mean(iran_errors^2))
   iran_mae_results[i] <- mean(abs(iran_errors))
   iran_mse_results[i] <- mean(iran_errors^2)
-  iran_mape_results[i] <- mean(abs(iran_errors / iran_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   iran_mean_train_diff <- mean(abs(diff(iran_train_data$owid_new_deaths)))
@@ -407,7 +396,6 @@ for (i in seq_along(iran_folds$splits)) {
 print(paste("RMSE:", mean(iran_rmse_results)))
 print(paste("MAE:", mean(iran_mae_results)))
 print(paste("MSE:", mean(iran_mse_results)))
-print(paste("MAPE:", mean(iran_mape_results)))
 print(paste("MASE:", mean(iran_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -472,7 +460,6 @@ mexico_folds %>% tk_time_series_cv_plan() %>%
 mexico_rmse_results <- numeric(length(mexico_folds$splits))
 mexico_mae_results <- numeric(length(mexico_folds$splits))
 mexico_mse_results <- numeric(length(mexico_folds$splits))
-mexico_mape_results <- numeric(length(mexico_folds$splits))
 mexico_mase_results <- numeric(length(mexico_folds$splits))
 
 # fitting to model and calculating metrics
@@ -497,7 +484,6 @@ for (i in seq_along(mexico_folds$splits)) {
   mexico_rmse_results[i] <- sqrt(mean(mexico_errors^2))
   mexico_mae_results[i] <- mean(abs(mexico_errors))
   mexico_mse_results[i] <- mean(mexico_errors^2)
-  mexico_mape_results[i] <- mean(abs(mexico_errors / mexico_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   mexico_mean_train_diff <- mean(abs(diff(mexico_train_data$owid_new_deaths)))
@@ -508,7 +494,6 @@ for (i in seq_along(mexico_folds$splits)) {
 print(paste("RMSE:", mean(mexico_rmse_results)))
 print(paste("MAE:", mean(mexico_mae_results)))
 print(paste("MSE:", mean(mexico_mse_results)))
-print(paste("MAPE:", mean(mexico_mape_results)))
 print(paste("MASE:", mean(mexico_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -573,7 +558,6 @@ peru_folds %>% tk_time_series_cv_plan() %>%
 peru_rmse_results <- numeric(length(peru_folds$splits))
 peru_mae_results <- numeric(length(peru_folds$splits))
 peru_mse_results <- numeric(length(peru_folds$splits))
-peru_mape_results <- numeric(length(peru_folds$splits))
 peru_mase_results <- numeric(length(peru_folds$splits))
 
 # fitting to model and calculating metrics
@@ -598,7 +582,6 @@ for (i in seq_along(peru_folds$splits)) {
   peru_rmse_results[i] <- sqrt(mean(peru_errors^2))
   peru_mae_results[i] <- mean(abs(peru_errors))
   peru_mse_results[i] <- mean(peru_errors^2)
-  peru_mape_results[i] <- mean(abs(peru_errors / peru_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   peru_mean_train_diff <- mean(abs(diff(peru_train_data$owid_new_deaths)))
@@ -609,7 +592,6 @@ for (i in seq_along(peru_folds$splits)) {
 print(paste("RMSE:", mean(peru_rmse_results)))
 print(paste("MAE:", mean(peru_mae_results)))
 print(paste("MSE:", mean(peru_mse_results)))
-print(paste("MAPE:", mean(peru_mape_results)))
 print(paste("MASE:", mean(peru_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -674,7 +656,6 @@ russia_folds %>% tk_time_series_cv_plan() %>%
 russia_rmse_results <- numeric(length(russia_folds$splits))
 russia_mae_results <- numeric(length(russia_folds$splits))
 russia_mse_results <- numeric(length(russia_folds$splits))
-russia_mape_results <- numeric(length(russia_folds$splits))
 russia_mase_results <- numeric(length(russia_folds$splits))
 
 # fitting to model and calculating metrics
@@ -699,7 +680,6 @@ for (i in seq_along(russia_folds$splits)) {
   russia_rmse_results[i] <- sqrt(mean(russia_errors^2))
   russia_mae_results[i] <- mean(abs(russia_errors))
   russia_mse_results[i] <- mean(russia_errors^2)
-  russia_mape_results[i] <- mean(abs(russia_errors / russia_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   russia_mean_train_diff <- mean(abs(diff(russia_train_data$owid_new_deaths)))
@@ -710,7 +690,6 @@ for (i in seq_along(russia_folds$splits)) {
 print(paste("RMSE:", mean(russia_rmse_results)))
 print(paste("MAE:", mean(russia_mae_results)))
 print(paste("MSE:", mean(russia_mse_results)))
-print(paste("MAPE:", mean(russia_mape_results)))
 print(paste("MASE:", mean(russia_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -776,7 +755,6 @@ saudi_folds %>% tk_time_series_cv_plan() %>%
 saudi_rmse_results <- numeric(length(saudi_folds$splits))
 saudi_mae_results <- numeric(length(saudi_folds$splits))
 saudi_mse_results <- numeric(length(saudi_folds$splits))
-saudi_mape_results <- numeric(length(saudi_folds$splits))
 saudi_mase_results <- numeric(length(saudi_folds$splits))
 
 # fitting to model and calculating metrics
@@ -801,7 +779,6 @@ for (i in seq_along(saudi_folds$splits)) {
   saudi_rmse_results[i] <- sqrt(mean(saudi_errors^2))
   saudi_mae_results[i] <- mean(abs(saudi_errors))
   saudi_mse_results[i] <- mean(saudi_errors^2)
-  saudi_mape_results[i] <- mean(abs(saudi_errors / saudi_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   saudi_mean_train_diff <- mean(abs(diff(saudi_train_data$owid_new_deaths)))
@@ -812,7 +789,6 @@ for (i in seq_along(saudi_folds$splits)) {
 print(paste("RMSE:", mean(saudi_rmse_results)))
 print(paste("MAE:", mean(saudi_mae_results)))
 print(paste("MSE:", mean(saudi_mse_results)))
-print(paste("MAPE:", mean(saudi_mape_results)))
 print(paste("MASE:", mean(saudi_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -877,7 +853,6 @@ turkey_folds %>% tk_time_series_cv_plan() %>%
 turkey_rmse_results <- numeric(length(turkey_folds$splits))
 turkey_mae_results <- numeric(length(turkey_folds$splits))
 turkey_mse_results <- numeric(length(turkey_folds$splits))
-turkey_mape_results <- numeric(length(turkey_folds$splits))
 turkey_mase_results <- numeric(length(turkey_folds$splits))
 
 # fitting to model and calculating metrics
@@ -902,7 +877,6 @@ for (i in seq_along(turkey_folds$splits)) {
   turkey_rmse_results[i] <- sqrt(mean(turkey_errors^2))
   turkey_mae_results[i] <- mean(abs(turkey_errors))
   turkey_mse_results[i] <- mean(turkey_errors^2)
-  turkey_mape_results[i] <- mean(abs(turkey_errors / turkey_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   turkey_mean_train_diff <- mean(abs(diff(turkey_train_data$owid_new_deaths)))
@@ -913,7 +887,6 @@ for (i in seq_along(turkey_folds$splits)) {
 print(paste("RMSE:", mean(turkey_rmse_results)))
 print(paste("MAE:", mean(turkey_mae_results)))
 print(paste("MSE:", mean(turkey_mse_results)))
-print(paste("MAPE:", mean(turkey_mape_results)))
 print(paste("MASE:", mean(turkey_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -978,7 +951,6 @@ us_folds %>% tk_time_series_cv_plan() %>%
 us_rmse_results <- numeric(length(us_folds$splits))
 us_mae_results <- numeric(length(us_folds$splits))
 us_mse_results <- numeric(length(us_folds$splits))
-us_mape_results <- numeric(length(us_folds$splits))
 us_mase_results <- numeric(length(us_folds$splits))
 
 # fitting to model and calculating metrics
@@ -1003,7 +975,6 @@ for (i in seq_along(us_folds$splits)) {
   us_rmse_results[i] <- sqrt(mean(us_errors^2))
   us_mae_results[i] <- mean(abs(us_errors))
   us_mse_results[i] <- mean(us_errors^2)
-  us_mape_results[i] <- mean(abs(us_errors / us_test_data$owid_new_deaths)) * 100
   
   # calculating MASE
   us_mean_train_diff <- mean(abs(diff(us_train_data$owid_new_deaths)))
@@ -1014,7 +985,6 @@ for (i in seq_along(us_folds$splits)) {
 print(paste("RMSE:", mean(us_rmse_results)))
 print(paste("MAE:", mean(us_mae_results)))
 print(paste("MSE:", mean(us_mse_results)))
-print(paste("MAPE:", mean(us_mape_results)))
 print(paste("MASE:", mean(us_mase_results)))
 
 # retrieving the fitted values for the training set
@@ -1304,13 +1274,7 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
   rmse <- mean(get(paste0(country, "_rmse_results")))
   mae <- mean(get(paste0(country, "_mae_results")))
   mse <- mean(get(paste0(country, "_mse_results")))
-  mape <- mean(get(paste0(country, "_mape_results")))
   mase <- mean(get(paste0(country, "_mase_results")))
-  
-  # handling division by zero for MAPE and checking for NA
-  if (!is.na(mape) && mape == Inf) {
-    mape <- NA
-  }
   
   # creating a data frame for the country's metrics
   if (tolower(country) == "us") {
@@ -1319,7 +1283,6 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
       RMSE = rmse,
       MAE = mae,
       MSE = mse,
-      MAPE = mape,
       MASE = mase
     )
   } else {
@@ -1328,7 +1291,6 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
       RMSE = rmse,
       MAE = mae,
       MSE = mse,
-      MAPE = mape,
       MASE = mase
     )
   }
@@ -1341,7 +1303,7 @@ for (country in c("bolivia", "brazil", "colombia", "iran",
 all_metrics_df <- do.call(rbind, metrics_list)
 
 # rounding the metrics to 3 decimal points + handling NAs
-num_cols <- c("RMSE", "MAE", "MSE", "MAPE", "MASE")
+num_cols <- c("RMSE", "MAE", "MSE", "MASE")
 all_metrics_df[num_cols] <- lapply(all_metrics_df[num_cols], function(x) {
   ifelse(is.na(x), NA, round(x, 3))
 })
@@ -1509,14 +1471,10 @@ calculate_metrics <- function(forecasted, actual, train) {
   errors <- forecasted - actual
   train_diff <- mean(abs(diff(train)))
   
-  # adding a small epsilon (division by zero in MAPE)
-  epsilon <- 1e-8
-  
   list(
     RMSE = sqrt(mean(errors^2)),
     MAE = mean(abs(errors)),
     MSE = mean(errors^2),
-    MAPE = mean(abs(errors / (actual + epsilon)), na.rm = TRUE) * 100,
     MASE = mean(abs(errors)) / train_diff
   )
 }
@@ -1558,7 +1516,6 @@ for (country_name in country_names) {
     RMSE = c(arima_metrics$RMSE, auto_metrics$RMSE),
     MAE = c(arima_metrics$MAE, auto_metrics$MAE),
     MSE = c(arima_metrics$MSE, auto_metrics$MSE),
-    MAPE = c(arima_metrics$MAPE, auto_metrics$MAPE),
     MASE = c(arima_metrics$MASE, auto_metrics$MASE)
   )
   
@@ -1578,7 +1535,7 @@ arima_final_metrics_df <- arima_final_metrics_df %>%
   ungroup()
 
 arima_final_metrics_df <- arima_final_metrics_df %>%
-  mutate(across(c(RMSE, MAE, MSE, MAPE, MASE), round, 3))
+  mutate(across(c(RMSE, MAE, MSE, MASE), round, 3))
 
 arima_final_metrics_df %>% 
   DT::datatable()
@@ -1638,7 +1595,6 @@ for (country_name in country_names) {
     RMSE = round(auto_metrics$RMSE, 3),
     MAE = round(auto_metrics$MAE, 3),
     MSE = round(auto_metrics$MSE, 3),
-    MAPE = round(auto_metrics$MAPE, 3),
     MASE = round(auto_metrics$MASE, 3)
   )
   
@@ -1657,3 +1613,4 @@ row.names(auto_arima_final_metrics_df) <- NULL
 # saving files ----
 save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
 save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda")
+
