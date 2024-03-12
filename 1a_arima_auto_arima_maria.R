@@ -1273,324 +1273,40 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
+# creating table metrics ----
 
-
-# YOU STOPPED HERE ----
-
-
-
-
-
-# producing training and testing separate plots ----
-
-
-## bolivia ----
-
-# producing fitted training set plot
-plot(bolivia_train_data$date, bolivia_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Bolivia", "Training Set"))
-lines(bolivia_train_data$date, bolivia_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(bolivia_test_data$date, bolivia_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Bolivia", "Test Set"))
-lines(bolivia_test_data$date, bolivia_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## brazil ----
-
-# producing fitted training set plot
-plot(brazil_train_data$date, brazil_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Brazil", "Training Set"))
-lines(brazil_train_data$date, brazil_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(brazil_test_data$date, brazil_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Brazil", "Test Set"))
-lines(brazil_test_data$date, brazil_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## iran ----
-
-# producing fitted training set plot
-plot(iran_train_data$date, iran_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Iran", "Training Set"))
-lines(iran_train_data$date, iran_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(iran_test_data$date, iran_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Iran", "Test Set"))
-lines(iran_test_data$date, iran_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## mexico ----
-
-# producing fitted training set plot
-plot(mexico_train_data$date, mexico_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Mexico", "Training Set"))
-lines(mexico_train_data$date, mexico_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(mexico_test_data$date, mexico_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Mexico", "Test Set"))
-lines(mexico_test_data$date, mexico_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## peru ----
-
-# producing fitted training set plot
-plot(peru_train_data$date, peru_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Peru", "Training Set"))
-lines(peru_train_data$date, peru_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(peru_test_data$date, peru_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Peru", "Test Set"))
-lines(peru_test_data$date, peru_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## russia ----
-
-# producing fitted training set plot
-plot(russia_train_data$date, russia_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Russia", "Training Set"))
-lines(russia_train_data$date, russia_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(russia_test_data$date, russia_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Russia", "Test Set"))
-lines(russia_test_data$date, russia_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## saudi ----
-
-# producing fitted training set plot
-plot(saudi_train_data$date, saudi_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Saudi", "Training Set"))
-lines(saudi_train_data$date, saudi_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(saudi_test_data$date, saudi_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Saudi", "Test Set"))
-lines(saudi_test_data$date, saudi_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## turkey ----
-
-# producing fitted training set plot
-plot(turkey_train_data$date, turkey_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Turkey", "Training Set"))
-lines(turkey_train_data$date, turkey_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(turkey_test_data$date, turkey_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("Turkey", "Test Set"))
-lines(turkey_test_data$date, turkey_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-## us ----
-
-# producing fitted training set plot
-plot(us_train_data$date, us_train_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("U.S.", "Training Set"))
-lines(us_train_data$date, us_fitted_values, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Fitted"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-# producing forecasting plot
-plot(us_test_data$date, us_test_data$owid_new_deaths, type = "l", col = "blue", xlab = "Date",
-     ylab = "New Deaths", main = paste("U.S.", "Test Set"))
-lines(us_test_data$date, us_forecast_values$mean, col = "red", lty = 2)
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
-
-
-
-# visualizing all metrics ----
-
-# defining a list to hold each country's metrics
-metrics_list <- list()
-
-# calculating metrics for each country
-for (country in c("bolivia", "brazil", "colombia", "iran",
-                  "mexico", "peru", "russia", "saudi", "turkey", "us")) {
-
-    # simulating the calculation of metrics
-  rmse <- mean(get(paste0(country, "_rmse_results")))
-  mae <- mean(get(paste0(country, "_mae_results")))
-  mse <- mean(get(paste0(country, "_mse_results")))
-  mase <- mean(get(paste0(country, "_mase_results")))
-  
-  # creating a data frame for the country's metrics
-  if (tolower(country) == "us") {
-    country_metrics_df <- data.frame(
-      Country = "US",
-      RMSE = rmse,
-      MAE = mae,
-      MSE = mse,
-      MASE = mase
-    )
-  } else {
-    country_metrics_df <- data.frame(
-      Country = tools::toTitleCase(country),
-      RMSE = rmse,
-      MAE = mae,
-      MSE = mse,
-      MASE = mase
-    )
-  }
-  
-  # adding data frame to list
-  metrics_list[[country]] <- country_metrics_df
-}
-
-# combining all the data frames into one
-all_metrics_df <- do.call(rbind, metrics_list)
-
-# rounding the metrics to 3 decimal points + handling NAs
-num_cols <- c("RMSE", "MAE", "MSE", "MASE")
-all_metrics_df[num_cols] <- lapply(all_metrics_df[num_cols], function(x) {
-  ifelse(is.na(x), NA, round(x, 3))
-})
-
-# sorting by RMSE
-all_metrics_df <- all_metrics_df[order(all_metrics_df$RMSE), ]
-
-# printing data frame
-print(all_metrics_df %>% DT::datatable())
-
-
-
-# creating a metrics list for each country (training included) ----
-
-# defining a list
-train_metrics_list <- list()
-
-# specifying countries
+# defining countries
 countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
+sarima_countries <- c("brazil", "mexico", "russia", "us")
 
-# looping to calculate training metrics
+# initialize empty data frames for ARIMA and SARIMA metrics
+arima_metrics <- data.frame(Country=character(), RMSE=numeric(), MSE=numeric(), MAE=numeric(), MASE=numeric(), p=integer(), d=integer(), q=integer(), stringsAsFactors=FALSE)
+sarima_metrics <- data.frame(Country=character(), RMSE=numeric(), MSE=numeric(), MAE=numeric(), MASE=numeric(), p=integer(), d=integer(), q=integer(), P=integer(), D=integer(), Q=integer(), stringsAsFactors=FALSE)
+
+
 for (country in countries) {
-  
-  # getting the actual and fitted values
-  actual_values <- get(paste0(country, "_train_data"))$owid_new_deaths
-  fitted_values <- get(paste0(country, "_fitted_values"))
-  
-  # calculating errors
-  errors <- actual_values - fitted_values
-  
-  # calculating metrics
-  rmse <- sqrt(mean(errors^2))
-  mae <- mean(abs(errors))
-  mse <- mean(errors^2)
-  
-  # storing metrics in list
-  train_metrics_list[[paste0(country, "_train_rmse")]] <- rmse
-  train_metrics_list[[paste0(country, "_train_mae")]] <- mae
-  train_metrics_list[[paste0(country, "_train_mse")]] <- mse
+  rmse <- get(paste0(country, "_rmse_results"))
+  mse <- get(paste0(country, "_mse_results"))
+  mae <- get(paste0(country, "_mae_results"))
+  mase <- get(paste0(country, "_mase_results"))
+  arima_country_metrics <- data.frame(Country = country, RMSE = rmse, MSE = mse, MAE = mae, MASE = mase)
+  arima_metrics <- rbind(arima_metrics, arima_country_metrics)
 }
 
-# creating a list to store comparison results
-performance_comparison <- list()
+# checking the final metrics data frame
+print(arima_metrics)
 
-# looping through each country
-for (country in countries) {
-  
-  # retrieving average training metrics
-  avg_train_rmse <- round(train_metrics_list[[paste0(country, "_train_rmse")]], 3)
-  avg_train_mae <- round(train_metrics_list[[paste0(country, "_train_mae")]], 3)
-  avg_train_mse <- round(train_metrics_list[[paste0(country, "_train_mse")]], 3)
-  
-  # retrieving average testing metrics
-  avg_test_rmse <- round(mean(get(paste0(country, "_rmse_results"))), 3)
-  avg_test_mae <- round(mean(get(paste0(country, "_mae_results"))), 3)
-  avg_test_mse <- round(mean(get(paste0(country, "_mse_results"))), 3)
-  
-  # calculating differences and rounding
-  rmse_diff <- round(avg_test_rmse - avg_train_rmse, 3)
-  mae_diff <- round(avg_test_mae - avg_train_mae, 3)
-  mse_diff <- round(avg_test_mse - avg_train_mse, 3)
-  
-  # diagnosing based on differences
-  diagnosis <- ifelse(rmse_diff > 0.2 & mae_diff > 0.2 & mse_diff > 0.2, "Possible Overfitting",
-                      ifelse(avg_train_rmse > 1 & avg_test_rmse > 1 & avg_train_mae > 1 & avg_test_mae > 1,
-                             "Possible Underfitting", "Appropriate Fit"))
-  
-  # formatting country names
-  formatted_country <- ifelse(country == "us", "US", tools::toTitleCase(country))
-  
-  # combining into data frame
-  comparison_df <- data.frame(
-    Country = formatted_country,
-    Train_RMSE = avg_train_rmse,
-    Test_RMSE = avg_test_rmse,
-    RMSE_Difference = rmse_diff,
-    Train_MAE = avg_train_mae,
-    Test_MAE = avg_test_mae,
-    MAE_Difference = mae_diff,
-    Train_MSE = avg_train_mse,
-    Test_MSE = avg_test_mse,
-    MSE_Difference = mse_diff,
-    Diagnosis = diagnosis
-  )
-  
-  # adding to list
-  performance_comparison[[country]] <- comparison_df
+for (country in sarima_countries) {
+  rmse <- get(paste0(country, "_rmse_results_sarima"))
+  mse <- get(paste0(country, "_mse_results_sarima"))
+  mae <- get(paste0(country, "_mae_results_sarima"))
+  mase <- get(paste0(country, "_mase_results_sarima"))
+  sarima_country_metrics <- data.frame(Country = country, RMSE = rmse, MSE = mse, MAE = mae, MASE = mase)
+  sarima_metrics <- rbind(sarima_metrics, sarima_country_metrics)
 }
 
-# combining all country comparisons
-all_comparisons_df <- do.call(rbind, performance_comparison)
-
-# rounding
-numeric_columns <- sapply(all_comparisons_df, is.numeric)
-all_comparisons_df[, numeric_columns] <- round(all_comparisons_df[, numeric_columns], 3)
-
-# printing comparison
-print(all_comparisons_df %>% DT::datatable(options = list(pageLength = 10)))
-
-
-
-# determining whether log transformation is required ----
-
-# placeholder for skewedness
-skewness_values <- list()
-transformation_advice <- list()
-countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
-for (country in countries) {
-  
-  # replacing these placeholders with variable names
-  forecast_values <- get(paste0(country, "_forecast_values"))$mean
-  actual_values <- get(paste0(country, "_test_data"))$owid_new_deaths
-  
-  # calculating residuals
-  residuals <- forecast_values - actual_values
-  
-  # calculating skewness
-  skewness_val <- skewness(residuals)
-  skewness_values[[country]] <- skewness_val
-  
-  # advice for transformation based on skewness
-  advice <- ifelse(abs(skewness_val) > 1, "Consider Log Transformation", "No Transformation Needed")
-  transformation_advice[[country]] <- advice
-}
-
-# printing values and advice
-print(skewness_values)
-print(transformation_advice)
+# checking the final metrics data frame
+print(sarima_metrics)
 
 
 
@@ -1773,8 +1489,5 @@ row.names(auto_arima_final_metrics_df) <- NULL
 
 # saving files ----
 save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
-<<<<<<< HEAD
 save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda")
-=======
 save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda") 
->>>>>>> main
