@@ -135,6 +135,24 @@ cat("MASE:", mean(multivar_metrics$MASE))
 
 print(multivar_metrics)
 
+plot_data <- data.frame(
+  ds = future$ds,
+  actual = actual,
+  forecast = forecast_values
+)
+
+# Plot actual vs forecasted values
+ggplot(plot_data, aes(x = ds)) +
+  geom_line(aes(y = actual, color = "Actual"), size = 1.2) +
+  geom_line(aes(y = forecast, color = "Forecast"), size = 1.2, linetype = "dashed") +
+  labs(
+    title = "Actual vs Forecasted COVID-19 Deaths",
+    x = "Date",
+    y = "Number of Deaths"
+  ) +
+  scale_color_manual(values = c("Actual" = "blue", "Forecast" = "red")) +
+  theme_minimal()
+
 save(multivar_metrics, file = "data_frames/luci_multivar_prophet_final_metrics_df.rda")
 
 
