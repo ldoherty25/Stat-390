@@ -1273,7 +1273,62 @@ legend("topright", legend = c("Actual", "Forecast", "Training Fit"), col = c("bl
 
 
 
+# auto-ARIMA ----
+
+# creating a list of country data frames
+countries_data <- list(
+  bolivia = bolivia,
+  brazil = brazil,
+  colombia = colombia,
+  iran = iran,
+  mexico = mexico,
+  peru = peru,
+  russia = russia,
+  saudi = saudi,
+  turkey = turkey,
+  us = us
+)
+
+# initializing a list to store the results
+results <- list()
+
+# looping through each country's data
+for(country_name in names(countries_data)) {
+  
+  # getting the country data
+  country_data <- countries_data[[country_name]]
+  
+  # ensuring the date column is of Date type
+  country_data$date <- as.Date(country_data$date)
+  
+  # splitting data into training (80%) and testing (20%)
+  split_index <- ceiling(nrow(country_data) * 0.8)
+  train_data <- country_data[1:split_index, ]
+  test_data <- country_data[(split_index + 1):nrow(country_data), ]
+  
+  # applying Auto-ARIMA model
+  auto_arima_model <- auto.arima(train_data$owid_new_deaths)
+  
+  # forecasting on the test set
+  forecast_values <- forecast(auto_arima_model, h = nrow(test_data))
+  
+  # storing the results
+  results[[country_name]] <- list(
+    model = auto_arima_model,
+    forecast = forecast_values,
+    test_data = test_data
+  )
+  
+  rmse_value <- sqrt(mean((forecast_values$mean - test_data$owid_new_deaths)^2))
+  cat(country_name, "RMSE:", rmse_value, "\n")
+}
+
+
+
 # creating table metrics ----
+
+
+## arima ----
 
 # defining countries
 countries <- c("bolivia", "brazil", "colombia", "iran", "mexico", "peru", "russia", "saudi", "turkey", "us")
@@ -1282,7 +1337,6 @@ sarima_countries <- c("brazil", "mexico", "russia", "us")
 # initialize empty data frames for ARIMA and SARIMA metrics
 arima_metrics <- data.frame(Country=character(), RMSE=numeric(), MSE=numeric(), MAE=numeric(), MASE=numeric(), p=integer(), d=integer(), q=integer(), stringsAsFactors=FALSE)
 sarima_metrics <- data.frame(Country=character(), RMSE=numeric(), MSE=numeric(), MAE=numeric(), MASE=numeric(), p=integer(), d=integer(), q=integer(), P=integer(), D=integer(), Q=integer(), stringsAsFactors=FALSE)
-
 
 for (country in countries) {
   rmse <- get(paste0(country, "_rmse_results"))
@@ -1293,8 +1347,16 @@ for (country in countries) {
   arima_metrics <- rbind(arima_metrics, arima_country_metrics)
 }
 
-# checking the final metrics data frame
+# adding column
+arima_metrics <- arima_metrics %>%
+  mutate(Model_Type = "ARIMA") %>% 
+  select(Country, Model_Type, RMSE, MSE, MASE, MAE)
+
+# printing the final metrics data frame
 print(arima_metrics)
+
+
+## sarima ----
 
 for (country in sarima_countries) {
   rmse <- get(paste0(country, "_rmse_results_sarima"))
@@ -1305,189 +1367,150 @@ for (country in sarima_countries) {
   sarima_metrics <- rbind(sarima_metrics, sarima_country_metrics)
 }
 
-# checking the final metrics data frame
+# adding column
+sarima_metrics <- sarima_metrics %>%
+  mutate(Model_Type = "SARIMA") %>% 
+  select(Country, Model_Type, RMSE, MSE, MASE, MAE)
+
+# printing the final metrics data frame
 print(sarima_metrics)
 
 
+## auto-arima ----
 
-# auto-ARIMA ----
+# initializing an empty data frame to store the metrics for all countries
+auto_arima_metrics <- data.frame(Country=character(), RMSE=numeric(), MSE=numeric(), MAE=numeric(), MASE=numeric(), stringsAsFactors=FALSE)
 
-# automatic ARIMA modeling
-bolivia_auto_model <- auto.arima(bolivia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-brazil_auto_model <- auto.arima(brazil_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-colombia_auto_model <- auto.arima(colombia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-iran_auto_model <- auto.arima(iran_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-mexico_auto_model <- auto.arima(mexico_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-peru_auto_model <- auto.arima(peru_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-russia_auto_model <- auto.arima(russia_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-saudi_auto_model <- auto.arima(saudi_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-turkey_auto_model <- auto.arima(turkey_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-us_auto_model <- auto.arima(us_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
+# looping through the results to calculate metrics and accumulate them
+for(country_name in names(results)) {
+  
+  # retrieving forecasted values and test data for the current country
+  forecast_values <- results[[country_name]]$forecast
+  test_data <- results[[country_name]]$test_data
+  
+  # calculating metrics
+  errors <- forecast_values$mean - test_data$owid_new_deaths
+  rmse_value <- sqrt(mean(errors^2))
+  mse_value <- mean(errors^2)
+  mae_value <- mean(abs(errors))
+  mase_value <- mean(abs(errors)) / mean(abs(diff(test_data$owid_new_deaths)))
+  
+  # creating a data frame row for the current country's metrics
+  country_metrics <- data.frame(Country = country_name, RMSE = rmse_value, MSE = mse_value, MAE = mae_value, MASE = mase_value)
+  
+  # accumulating the metrics in the main data frame
+  auto_arima_metrics <- rbind(auto_arima_metrics, country_metrics)
+}
 
-# viewing selected model's details
-summary(bolivia_auto_model)
-summary(brazil_auto_model)
-summary(colombia_auto_model)
-summary(iran_auto_model)
-summary(mexico_auto_model)
-summary(peru_auto_model)
-summary(russia_auto_model)
-summary(saudi_auto_model)
-summary(turkey_auto_model)
-summary(us_auto_model)
+# adding column
+auto_arima_metrics <- auto_arima_metrics %>%
+  mutate(Model_Type = "Auto-ARIMA") %>% 
+  select(Country, Model_Type, RMSE, MSE, MASE, MAE)
+
+# printing the final metrics data frame
+print(auto_arima_metrics)
 
 
 
 # displaying best models ----
 
-# defining helper function to calculate metrics
-calculate_metrics <- function(forecasted, actual, train) {
-  errors <- forecasted - actual
-  train_diff <- mean(abs(diff(train)))
-  
-  list(
-    RMSE = sqrt(mean(errors^2)),
-    MAE = mean(abs(errors)),
-    MSE = mean(errors^2),
-    MASE = mean(abs(errors)) / train_diff
-  )
-}
-
-# extracting country names
-countries_data <- list(bolivia = bolivia, brazil = brazil, colombia = colombia, iran = iran, mexico = mexico, peru = peru, russia = russia, saudi = saudi, turkey = turkey, us = us)
-country_names <- names(countries_data)
-
-# initializing empty list to store metrics
-all_countries_metrics <- list()
-
-# looping through each country
-for (country_name in country_names) {
-  
-  # load country-specific data
-  country_data <- get(paste0(country_name, "_train_data"))
-  country_test_data <- get(paste0(country_name, "_test_data"))
-  
-  # ARIMA model
-  arima_model <- get(paste0(country_name, "_arima_model"))
-  
-  # Auto-ARIMA model
-  auto_model <- auto.arima(country_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-  
-  # forecasting using both models
-  arima_forecast <- forecast(arima_model, h = nrow(country_test_data))
-  auto_forecast <- forecast(auto_model, h = nrow(country_test_data))
-  
-  # calculating metrics for ARIMA
-  arima_metrics <- calculate_metrics(arima_forecast$mean, country_test_data$owid_new_deaths, country_data$owid_new_deaths)
-  
-  # calculating metrics for Auto-ARIMA
-  auto_metrics <- calculate_metrics(auto_forecast$mean, country_test_data$owid_new_deaths, country_data$owid_new_deaths)
-  
-  # combining metrics into a data frame
-  metrics_df <- data.frame(
-    Country = country_name,
-    Best_Model_RMSE = c("ARIMA", "Auto-ARIMA"),
-    RMSE = c(arima_metrics$RMSE, auto_metrics$RMSE),
-    MAE = c(arima_metrics$MAE, auto_metrics$MAE),
-    MSE = c(arima_metrics$MSE, auto_metrics$MSE),
-    MASE = c(arima_metrics$MASE, auto_metrics$MASE)
-  )
-  
-  # capitalizing country name in metrics_df
-  metrics_df$Country <- ifelse(tolower(metrics_df$Country) != "us", tools::toTitleCase(metrics_df$Country), "US")
-  
-  # storing in list
-  all_countries_metrics[[country_name]] <- metrics_df
-}
-
-# combining all metrics into one data frame
-arima_final_metrics_df <- do.call(rbind, all_countries_metrics)
-arima_final_metrics_df <- arima_final_metrics_df %>%
-  group_by(Country) %>%
-  slice_min(order_by = RMSE, with_ties = FALSE) %>%
-  ungroup()
-
-arima_final_metrics_df <- arima_final_metrics_df %>%
-  mutate(across(c(RMSE, MAE, MSE, MASE), round, 3))
-
-arima_final_metrics_df %>% 
-  DT::datatable()
-
-# printing final metrics table
-print(arima_final_metrics_df)
+# binding previously made tables
+arima_all_family_models <- rbind(arima_metrics, sarima_metrics, auto_arima_metrics) %>% 
+  arrange(RMSE)
 
 # removing row names
-row.names(arima_final_metrics_df) <- NULL
+row.names(arima_all_family_models) <- NULL
 
-# arima parameters
-arima_params <- data.frame(
-  Country = c("Bolivia", "Brazil", "Colombia", "Iran", "Mexico", "Peru", "Russia", "Saudi", "Turkey", "US"),
-  p = c(0, 0, 0, 1, 1, 0, 1, 1, 0, 0),
-  d = c(1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
-  q = c(1, 1, 0, 0, 0, 1, 0, 0, 0, 0),
-  P = c(0, 0, 1, 1, 1, 0, 0, 1, 0, 1),
-  D = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-  Q = c(0, 0, 1, 0, 0, 1, 0, 0, 0, 1),
-  s = c(7, 7, 10, 10, 13, 3, 2, 3, 1, 7)
-) %>% DT::datatable()
 
-# auto-arima parameters
-auto_arima_params <- data.frame(
-  Country = c("Bolivia", "Brazil", "Colombia", "Iran", "Mexico", "Peru", "Russia", "Saudi", "Turkey", "US"),
-  p = c(2, 3, 1, 2, 0, 1, 0, 3, 1, 2),
-  d = c(1, 0, 1, 1, 1, 1, 1, 1, 1, 1),
-  q = c(2, 3, 1, 0, 2, 3, 1, 0, 1, 2),
-  P = c(1, 0, 1, 0, 1, 0, 2, 1, 0, 1),
-  D = c(1, 1, 1, 1, 0, 1, 1, 1, 1, 1),
-  Q = c(1, 2, 1, 1, 1, 0, 2, 1, 2, 1),
-  s = c(7, 7, 12, 12, 12, 4, 12, 12, 12, 7)
-) %>% DT::datatable()
+## best per country ----
 
-# initializing an empty list to store the metrics for each country
-auto_arima_metrics_list <- list()
-
-# looping through each country
-for (country_name in country_names) {
-  
-  # loading country-specific training data
-  country_train_data <- get(paste0(country_name, "_train_data"))
-  country_test_data <- get(paste0(country_name, "_test_data"))
-  
-  # fitting the Auto-ARIMA model to the training data
-  auto_model <- auto.arima(country_train_data$owid_new_deaths, stepwise = FALSE, approximation = FALSE)
-  
-  # forecasting using the Auto-ARIMA model
-  auto_forecast <- forecast(auto_model, h = nrow(country_test_data))
-  
-  # calculating metrics for Auto-ARIMA
-  auto_metrics <- calculate_metrics(auto_forecast$mean, country_test_data$owid_new_deaths, country_train_data$owid_new_deaths)
-  
-  # creating a data frame for the Auto-ARIMA metrics
-  auto_metrics_df <- data.frame(
-    Country = ifelse(country_name == "us", "US", tools::toTitleCase(country_name)),
-    RMSE = round(auto_metrics$RMSE, 3),
-    MAE = round(auto_metrics$MAE, 3),
-    MSE = round(auto_metrics$MSE, 3),
-<<<<<<< HEAD
-    MAPE = round(auto_metrics$MAPE, 3),
-=======
->>>>>>> main
-    MASE = round(auto_metrics$MASE, 3)
-  )
-  
-  # storing the data frame in the list
-  auto_arima_metrics_list[[country_name]] <- auto_metrics_df
-}
-
-# combining all the country-specific metrics into a single data frame
-auto_arima_final_metrics_df <- do.call(rbind, auto_arima_metrics_list)
+# grouping by country and selecting the best model by RMSE
+best_arima_family_models <- arima_all_family_models %>%
+  group_by(Country) %>%
+  filter(RMSE == min(RMSE)) %>%
+  ungroup()
 
 # removing row names for a cleaner look
-row.names(auto_arima_final_metrics_df) <- NULL
+row.names(best_arima_family_models) <- NULL
+
+
+## hyperparameters ----
+
+### ARIMA ----
+
+arima_best_params <- list(
+  list(Country = "saudi", Model_Type = "ARIMA", p = "0", d = "1", q = "1"),
+  list(Country = "bolivia", Model_Type = "ARIMA", p = "0", d = "2", q = "1"),
+  list(Country = "colombia", Model_Type = "ARIMA", p = "2", d = "1", q = "2"),
+  list(Country = "peru", Model_Type = "ARIMA", p = "0", d = "1", q = "0")
+)
+
+# converting the list of lists into a data frame
+arima_best_params_df <- do.call(rbind, lapply(arima_best_params, as.data.frame, stringsAsFactors = FALSE))
+
+# row names as numbers
+row.names(arima_best_params_df) <- NULL
+
+### SARIMA ----
+sarima_best_params <- list(
+  list(Country = "russia", Model_Type = "SARIMA", p = "0", d = "1", q = "0", P = "0", D = "1", Q = "2", period = "7"),
+  list(Country = "brazil", Model_Type = "SARIMA", p = "2", d = "0", q = "2", P = "1", D = "1", Q = "1", period = "7"),
+  list(Country = "us", Model_Type = "SARIMA", p = "1", d = "0", q = "0", P = "1", D = "0", Q = "1", period = "7")
+)
+sarima_best_params_df <- do.call(rbind, lapply(sarima_best_params, as.data.frame, stringsAsFactors = FALSE))
+row.names(sarima_best_params_df) <- NULL
+
+### Auto-ARIMA ----
+auto_arima_best_params <- list(
+  list(Country = "turkey", Model_Type = "Auto-ARIMA", p = "1", d = "1", q = "1"),
+  list(Country = "iran", Model_Type = "Auto-ARIMA", p = "1", d = "1", q = "3"),
+  list(Country = "mexico", Model_Type = "Auto-ARIMA", p = "1", d = "1", q = "3")
+)
+auto_arima_best_params_df <- do.call(rbind, lapply(auto_arima_best_params, as.data.frame, stringsAsFactors = FALSE))
+row.names(auto_arima_best_params_df) <- NULL
+
+### combining the models and parameters data frames ----
+arima_combined_models_df <- best_arima_family_models %>%
+  full_join(arima_best_params_df, by = "Country") %>%
+  full_join(sarima_best_params_df, by = "Country") %>%
+  full_join(auto_arima_best_params_df, by = "Country")
+
+# identifying Model_Type columns if they've been suffixed
+model_type_cols <- names(arima_combined_models_df)[grepl("Model_Type", names(arima_combined_models_df))]
+
+# choosing the first Model_Type
+if (length(model_type_cols) > 1) {
+  arima_combined_models_df <- arima_combined_models_df %>%
+    rename(Model_Type = !!model_type_cols[1]) %>%
+    select(-one_of(model_type_cols[-1]))
+} else if (length(model_type_cols) == 1) {
+  arima_combined_models_df <- arima_combined_models_df %>%
+    rename(Model_Type = !!model_type_cols[1])
+}
+
+# cleaning up any other inconsistencies
+arima_combined_models_df <- arima_combined_models_df %>%
+  distinct() %>%
+  arrange(Country)
+
+# displaying the cleaned-up data frame
+print(arima_combined_models_df)
+
+# merging the columns with coalesce
+arima_combined_models_df <- arima_combined_models_df %>%
+  mutate(
+    p = coalesce(p.x, p.y, p),
+    d = coalesce(d.x, d.y, d),
+    q = coalesce(q.x, q.y, q)
+  ) %>%
+  select(Country, Model_Type, RMSE, MSE, MASE, MAE, p, d, q, P, D, Q, period) %>%
+  arrange(Country) 
+
+# print the final data frame
+print(arima_combined_models_df)
 
 
 
 # saving files ----
-save(arima_final_metrics_df, file = "data_frames/maria_arima_final_metrics_df.rda")
-save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda")
-save(auto_arima_final_metrics_df, file = "auto_arima_final_metrics_df.rda") 
+save(arima_all_family_models, file = "data_frames/arima_all_family_models_maria.rda")
+save(arima_combined_models_df, file = "data_frames/arima_combined_models_df_maria.rda")

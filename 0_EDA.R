@@ -793,10 +793,6 @@ summary(for_custom_features$vulnerability_index_cf)
 
 # plotting the distribution to identify potential large values
 hist(for_custom_features$vulnerability_index_cf)
-<<<<<<< HEAD
-=======
-# Error in plot.new() : figure margins too large !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
->>>>>>> main
 
 # applying a transformation to mitigate large values
 for_custom_features$scaled_vulnerability_index_cf <- scale(for_custom_features$vulnerability_index_cf)
@@ -809,12 +805,7 @@ plot4 <- ggplot(for_custom_features, aes(x = scaled_vulnerability_index_cf, y = 
 
 # arranging plots in a single visualization
 combined_plot_ii <- grid.arrange(plot3, plot4, ncol = 1)
-<<<<<<< HEAD
 
-=======
-# Error in .Call.graphics(C_palette2, .Call(C_palette2, NULL)) : 
-#   invalid graphics state !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
->>>>>>> main
 
 ## feature selection ----
 
