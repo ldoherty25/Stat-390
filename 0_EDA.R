@@ -119,26 +119,6 @@ preprocessed_covid_multi <- preprocessed_covid_multi %>%
          ox_e4_international_support = abs(ox_e4_international_support))
 
 
-# ## removing outliers ----
-# 
-# # creating a function to remove outliers within a group
-# remove_outliers <- function(df, var_name) {
-#   Q1 <- quantile(df[[var_name]], 0.25, na.rm = TRUE)
-#   Q3 <- quantile(df[[var_name]], 0.75, na.rm = TRUE)
-#   IQR <- Q3 - Q1
-#   lower_bound <- Q1 - 1.5 * IQR
-#   upper_bound <- Q3 + 1.5 * IQR
-#   df <- df %>% filter(df[[var_name]] >= lower_bound & df[[var_name]] <= upper_bound)
-#   return(df)
-# }
-# 
-# # applying to each country
-# preprocessed_covid_multi <- preprocessed_covid_multi %>%
-#   group_by(country) %>%
-#   do(remove_outliers(., 'owid_new_deaths')) %>%
-#   ungroup()
-
-
 ## assessing final missingness ----
 
 # inspecting missingness again

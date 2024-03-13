@@ -1,4 +1,5 @@
 ## Multivariate Prophet
+## Due to computational issues that arose when looping, country names were manually changed to train models.
 
 # primary checks ----
 
@@ -22,160 +23,189 @@ set.seed(1234)
 # load data ----
 load("data/preprocessed/multivariate/not_split/preprocessed_covid_multi_imputed.rda")
 
+# Assuming data is already loaded and preprocessed
+russia_data <- preprocessed_covid_multi_imputed %>%
+  filter(country == "Russian Federation") %>%
+  filter(cumsum(owid_new_deaths) >= 1) %>%
+  mutate(ds = date, y = owid_new_deaths) %>%
+  arrange(ds) %>% 
+  select(-c(date,
+            owid_new_deaths,
+            country,
+            month,
+            weekday,
+            cyclical_month_cos,
+            cyclical_weekday_cos,
+            cyclical_dayofmth_cos,
+            day,
+            cyclical_month_sin,
+            cyclical_weekday_sin,
+            cyclical_dayofmth_sin))
 
+russia_data$ds <- as.Date(russia_data$ds)
 
-# variable adjustments ----
+# Splitting logic for Russian Federation
+n <- nrow(russia_data)
+fold_size <- floor(n / 5)
 
-# one-hot encoding country
-df_with_dummies <- preprocessed_covid_multi_imputed %>%
-  dummy_cols("country", remove_first_dummy = TRUE, remove_selected_columns = TRUE) %>%
-  janitor::clean_names() %>%
-  mutate(ds = as.Date(date), y = owid_new_deaths) %>%
-  arrange(ds)
+# Initialize a list to store metrics for Russian Federation
+russia_metrics <- list()
 
-# converting weekday
-df_with_dummies <- df_with_dummies %>%
-  mutate(weekday = lubridate::wday(ds, label = TRUE, abbr = FALSE)) %>%
-  mutate(weekday = as.numeric(as.factor(weekday))) %>%
-  mutate(weekday = ifelse(is.na(weekday), 0, weekday))
+# Loop through each fold for Russian Federation
+for (fold in 1:5) {
+  test_indices <- ((fold - 1) * fold_size + 1):min(fold * fold_size, n)
+  testing_data <- russia_data[test_indices, ]
+  training_data <- russia_data[-test_indices, ]
+  
+  print("Training data:")
+  print(head(training_data))
+  print("Testing data:")
+  print(head(testing_data))
+  
+  if (nrow(training_data) > 0 & nrow(testing_data) > 0) {
+    m <- prophet()
+    m <- add_regressor(m, 'owid_new_cases')
+    m <- add_regressor(m, 'owid_population')
+    m <- add_regressor(m, 'owid_cardiovasc_death_rate')
+    m <- add_regressor(m, 'owid_diabetes_prevalence')
+    m <- add_regressor(m, 'owid_male_smokers')
+    m <- add_regressor(m, 'ox_c1_school_closing')
+    m <- add_regressor(m, 'ox_c1_flag')
+    m <- add_regressor(m, 'ox_c2_workplace_closing')
+    m <- add_regressor(m, 'ox_c2_flag')
+    m <- add_regressor(m, 'ox_c3_flag')
+    m <- add_regressor(m, 'ox_c4_restrictions_on_gatherings')
+    m <- add_regressor(m, 'ox_c4_flag')
+    m <- add_regressor(m, 'ox_c6_stay_at_home_requirements')
+    m <- add_regressor(m, 'ox_c7_restrictions_on_internal_movement')
+    m <- add_regressor(m, 'ox_h1_flag')
+    m <- add_regressor(m, 'ox_government_response_index')
+    m <- add_regressor(m, 'google_mobility_change_parks')
+    m <- add_regressor(m, 'google_mobility_change_retail_and_recreation')
+    
+    print("Model summary:")
+    print(summary(m))
+    
+    tryCatch({
+      m <- fit.prophet(m, training_data)
+    }, error = function(e) {
+      print("Error in fitting the Prophet model:")
+      print(e)
+    })
+    
+    # Instead of just creating forecast_dates_df with ds, include the regressors as well
+    forecast_dates_df <- testing_data %>% 
+      select(ds, owid_new_cases, owid_population, owid_cardiovasc_death_rate, owid_diabetes_prevalence, 
+             owid_male_smokers, ox_c1_school_closing, ox_c1_flag, ox_c2_workplace_closing, ox_c2_flag, 
+             ox_c3_flag, ox_c4_restrictions_on_gatherings, ox_c4_flag, ox_c6_stay_at_home_requirements, 
+             ox_c7_restrictions_on_internal_movement, ox_h1_flag, ox_government_response_index, 
+             google_mobility_change_parks, google_mobility_change_retail_and_recreation)
+    
+    # The rest of your code remains the same
+    tryCatch({
+      forecast <- predict(m, forecast_dates_df)
+    }, error = function(e) {
+      print("Error in generating forecast:")
+      print(e)
+    })
+    
+    print("Forecast summary:")
+    print(head(forecast))
+    
+    matched_forecast <- forecast %>%
+      dplyr::filter(ds %in% testing_data$ds)
+    
+    print("Matched forecast summary:")
+    print(head(matched_forecast))
+    
+    predictions <- matched_forecast$yhat
+    actuals <- testing_data$y
+    
+    if (length(predictions) == 0 || length(actuals) == 0) {
+      print("Warning: Empty predictions or actuals. Skipping RMSE calculation.")
+      next
+    }
+    
+    RMSE <- sqrt(mean((predictions - actuals)^2))
+    MSE <- mean((predictions - actuals)^2)
+    MAE <- mean(abs(predictions - actuals))
+    
+    entire_data <- preprocessed_covid_multi_imputed %>%
+      filter(country == "Russian Federation") %>%
+      filter(cumsum(owid_new_deaths) > 0) %>%
+      arrange(date) %>%
+      select(y = owid_new_deaths)
+    
+    naive_forecasts_entire <- entire_data$y[-1]
+    actuals_for_naive_entire <- entire_data$y[-length(entire_data$y)]
+    scaling_factor_entire <- mean(abs(naive_forecasts_entire - actuals_for_naive_entire))
 
-
-
-# dataset preparation ----
-
-# splitting into training and testing sets
-split_index <- floor(0.8 * nrow(df_with_dummies))
-training_df <- df_with_dummies[1:split_index, ]
-testing_df <- df_with_dummies[(split_index + 1):nrow(df_with_dummies), ]
-
-# model setup and training
-m <- prophet(growth = "linear", yearly.seasonality = FALSE, weekly.seasonality = TRUE,
-             daily.seasonality = FALSE, seasonality.mode = "additive", 
-             seasonality.prior.scale = 10, holidays.prior.scale = 10,
-             changepoint.prior.scale = 0.1, n.changepoints = 25, 
-             changepoint.range = 0.8, interval.width = 0.8, uncertainty.samples = 1000)
-
-# adding predictors as regressors
-predictor_columns <- setdiff(names(training_df), c("ds", "y", "date", "owid_new_deaths"))
-for (predictor in predictor_columns) {
-  m <- add_regressor(m, predictor)
+    # Before calculating MASE
+    print(paste("MAE:", MAE))
+    print(paste("Scaling Factor (Denominator for MASE):", scaling_factor_entire))
+    
+    # Calculate MASE
+    MASE <- MAE / scaling_factor_entire
+    
+    # After calculating MASE
+    print(paste("MASE:", MASE))
+    
+    # Correct MASE calculation
+    MASE <- MAE / scaling_factor_entire
+    
+    # Store metrics for this fold
+    russia_metrics[[fold]] <- list(
+      RMSE = RMSE,
+      MSE = MSE,
+      MAE = MAE,
+      MASE = MASE # Ensure MASE is included here
+    )
+  }
 }
 
-# fitting model with training data
-m <- prophet::fit.prophet(m, df = training_df)
+# Convert metrics for Russian Federation to a dataframe
+russia_metrics_df <- do.call(rbind, lapply(russia_metrics, function(x) do.call(data.frame, x)))
 
+# Fill missing MASE values with NA
+russia_metrics_df$MASE[is.nan(russia_metrics_df$MASE)] <- NA
 
+russia_metrics_df$Country <- "russia"
+russia_metrics_df$Model_Type <- "Multivariate Prophet"
 
-# cross-validation process ----
+russia_metrics_df <- russia_metrics_df %>% 
+  select(Country, Model_Type, RMSE, MSE, MAE, MASE)
 
-cv_split_index <- floor(0.9 * nrow(training_df))
-cv_training_df <- training_df[1:cv_split_index, ]
-cv_validation_df <- training_df[(cv_split_index + 1):nrow(training_df), ]
+# Calculate average metrics across folds
+russia_average_metrics <- colMeans(russia_metrics_df[, -which(names(russia_metrics_df) %in% c("Country", "Model_Type"))], na.rm = TRUE)
 
-create_prophet_model <- function() {
-  prophet(
-    growth = "linear",
-    yearly.seasonality = FALSE,
-    weekly.seasonality = TRUE,
-    daily.seasonality = FALSE,
-    seasonality.mode = "additive",
-    seasonality.prior.scale = 10,
-    holidays.prior.scale = 10,
-    changepoint.prior.scale = 0.1,
-    n.changepoints = 25,
-    changepoint.range = 0.8,
-    interval.width = 0.8,
-    uncertainty.samples = 1000
-  )
-}
-
-# creating new model for cross-validation
-cv_model <- create_prophet_model()
-
-# adding predictors as regressors for new model
-for (predictor in predictor_columns) {
-  cv_model <- add_regressor(cv_model, predictor)
-}
-
-# fitting model on cv_training_df
-cv_model <- prophet::fit.prophet(cv_model, df = cv_training_df)
-
-# forecasting
-cv_future <- make_future_dataframe(cv_model, periods = nrow(cv_validation_df), freq = 'day')
-
-# filtering cv_future to match the dates in cv_validation_df
-cv_future_filtered <- cv_future %>%
-  filter(ds %in% cv_validation_df$ds)
-
-# left-joining to bring in predictor columns
-cv_future_filtered <- left_join(cv_future_filtered, cv_validation_df[, c("ds", predictor_columns)], by = "ds")
-
-# checking missing dates
-if(nrow(cv_future_filtered) != nrow(cv_validation_df)) {
-  stop("Mismatch in the number of rows after preparing cv_future. Check date alignment.")
-}
-
-# forecasting on validation set
-cv_forecast <- predict(cv_model, cv_future_filtered)
-
-# comparing forecast against actual values
-actuals <- cv_validation_df$y
-forecasts <- cv_forecast$yhat
-
-
-
-# evaluation metrics ----
-
-# calculating metrics
-RMSE <- sqrt(mean((forecasts - actuals)^2))
-MAE <- mean(abs(forecasts - actuals))
-MSE <- mean((forecasts - actuals)^2)
-MAPE <- mean(abs((forecasts - actuals) / actuals))
-
-# naive forecast for mas calculation
-naive_forecast <- c(NA, actuals[-length(actuals)])
-MASE <- mean(abs(forecasts - actuals)) / mean(abs(naive_forecast - actuals)[-1])
-
-# creating a data frame
-maria_multivar_prophet_table <- data.frame(
-  Country = "All",
-  Best_Model_RMSE = "Multivariate Prophet",
-  RMSE, 
-  MAE, 
-  MSE, 
-  MAPE, 
-  MASE
+# Create a dataframe with averaged metrics
+russia_averaged_metrics_df <- data.frame(
+  Country = "russia",
+  Model_Type = "Multivariate Prophet",
+  RMSE = russia_average_metrics["RMSE"],
+  MSE = russia_average_metrics["MSE"],
+  MAE = russia_average_metrics["MAE"],
+  MASE = russia_average_metrics["MASE"]
 )
 
+row.names(russia_averaged_metrics_df) <- NULL
 
+# Print averaged_metrics_df to check its structure
+print("Printing averaged_metrics_df:")
+print(russia_averaged_metrics_df)
 
-# saving files ----
-save(maria_multivar_prophet_table, file = "data_frames/maria_multivar_prophet_table.rda")
-
-
-
-# creating visualizations ----
-
-# summing new deaths across all countries for each date
-
-agg_actuals <- cv_validation_df %>%
-  group_by(ds) %>%
-  summarize(agg_new_deaths = sum(y, na.rm = TRUE))
-
-agg_forecasts <- cv_forecast %>%
-  group_by(ds) %>%
-  summarize(agg_yhat = sum(yhat, na.rm = TRUE),
-            agg_yhat_lower = sum(yhat_lower, na.rm = TRUE),
-            agg_yhat_upper = sum(yhat_upper, na.rm = TRUE))
-
-# creating a plot with aggregated actual and forecasted values
-ggplot() +
-  geom_line(data = agg_actuals, aes(x = ds, y = agg_new_deaths), color = "blue", size = 1) +
-  geom_line(data = agg_forecasts, aes(x = ds, y = agg_yhat), color = "red", size = 1, linetype = "dashed") +
-  geom_ribbon(data = agg_forecasts, aes(x = ds, ymin = agg_yhat_lower, ymax = agg_yhat_upper),
-              fill = "orange", alpha = 0.2) +
-  labs(title = "Aggregated Actual vs Forecasted New Deaths Across All Countries",
-       x = "Date",
-       y = "Aggregated New Deaths") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
+# multivar_prophet_maria <- rbind(bolivia_averaged_metrics_df,
+#                                 brazil_averaged_metrics_df,
+#                                 turkey_averaged_metrics_df,
+#                                 russia_averaged_metrics_df,
+#                                 us_averaged_metrics_df,
+#                                 iran_averaged_metrics_df,
+#                                 saudi_averaged_metrics_df,
+#                                 colombia_averaged_metrics_df,
+#                                 mexico_averaged_metrics_df,
+#                                 peru_averaged_metrics_df)
+# 
+# multivar_prophet_maria <- multivar_prophet_maria %>% 
+#   arrange(RMSE)
+# 
+# save(multivar_prophet_maria, file = "data_frames/multivar_prophet_maria.rda")

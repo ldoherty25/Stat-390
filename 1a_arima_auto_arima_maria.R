@@ -1503,11 +1503,12 @@ arima_combined_models_df <- arima_combined_models_df %>%
     d = coalesce(d.x, d.y, d),
     q = coalesce(q.x, q.y, q)
   ) %>%
-  select(Country, Model_Type, RMSE, MSE, MASE, MAE, p, d, q, P, D, Q, period) %>%
+  select(Country, Model_Type, RMSE, MSE, MAE, MASE, p, d, q, P, D, Q, period) %>%
   arrange(Country) 
 
-# print the final data frame
-print(arima_combined_models_df)
+# reordering
+arima_all_family_models <- arima_all_family_models %>% 
+  select(Country, Model_Type, RMSE, MSE, MAE, MASE)
 
 
 
