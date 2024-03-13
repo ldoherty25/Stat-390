@@ -184,6 +184,17 @@ row.names(russia_averaged_metrics_df) <- NULL
 print("Printing averaged_metrics_df:")
 print(russia_averaged_metrics_df)
 
+# producing visualizations
+ggplot(matched_forecast, aes(x = ds)) +
+  geom_line(aes(y = yhat, color = "Forecasted"), linetype = "dashed") +
+  geom_line(aes(y = actuals, color = "Actual")) +
+  labs(x = "Date", y = "New Deaths", title = "Russia: Actual vs Forecasted") +
+  scale_color_manual("", 
+                     breaks = c("Actual", "Forecasted"),
+                     values = c("Actual" = "blue", "Forecasted" = "red")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
 # # joining all manually obtained metrics
 # multivar_prophet_maria <- rbind(bolivia_averaged_metrics_df,
 #                                 brazil_averaged_metrics_df,
