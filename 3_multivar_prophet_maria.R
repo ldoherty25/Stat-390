@@ -20,10 +20,10 @@ tidymodels_prefer()
 # setting a seed
 set.seed(1234)
 
-# load data ----
+# load data
 load("data/preprocessed/multivariate/not_split/preprocessed_covid_multi_imputed.rda")
 
-# Assuming data is already loaded and preprocessed
+# specifying data for russia
 russia_data <- preprocessed_covid_multi_imputed %>%
   filter(country == "Russian Federation") %>%
   filter(cumsum(owid_new_deaths) >= 1) %>%
@@ -44,14 +44,14 @@ russia_data <- preprocessed_covid_multi_imputed %>%
 
 russia_data$ds <- as.Date(russia_data$ds)
 
-# Splitting logic for Russian Federation
+# splitting logic for russia
 n <- nrow(russia_data)
 fold_size <- floor(n / 5)
 
-# Initialize a list to store metrics for Russian Federation
+# initializing a list to store metrics for russia
 russia_metrics <- list()
 
-# Loop through each fold for Russian Federation
+# loop through each fold for russia
 for (fold in 1:5) {
   test_indices <- ((fold - 1) * fold_size + 1):min(fold * fold_size, n)
   testing_data <- russia_data[test_indices, ]
@@ -93,7 +93,6 @@ for (fold in 1:5) {
       print(e)
     })
     
-    # Instead of just creating forecast_dates_df with ds, include the regressors as well
     forecast_dates_df <- testing_data %>% 
       select(ds, owid_new_cases, owid_population, owid_cardiovasc_death_rate, owid_diabetes_prevalence, 
              owid_male_smokers, ox_c1_school_closing, ox_c1_flag, ox_c2_workplace_closing, ox_c2_flag, 
@@ -101,7 +100,6 @@ for (fold in 1:5) {
              ox_c7_restrictions_on_internal_movement, ox_h1_flag, ox_government_response_index, 
              google_mobility_change_parks, google_mobility_change_retail_and_recreation)
     
-    # The rest of your code remains the same
     tryCatch({
       forecast <- predict(m, forecast_dates_df)
     }, error = function(e) {
@@ -140,45 +138,37 @@ for (fold in 1:5) {
     actuals_for_naive_entire <- entire_data$y[-length(entire_data$y)]
     scaling_factor_entire <- mean(abs(naive_forecasts_entire - actuals_for_naive_entire))
 
-    # Before calculating MASE
     print(paste("MAE:", MAE))
     print(paste("Scaling Factor (Denominator for MASE):", scaling_factor_entire))
     
-    # Calculate MASE
+    # calculating MASE
     MASE <- MAE / scaling_factor_entire
     
-    # After calculating MASE
     print(paste("MASE:", MASE))
     
-    # Correct MASE calculation
     MASE <- MAE / scaling_factor_entire
     
-    # Store metrics for this fold
+    # storing metrics for this fold
     russia_metrics[[fold]] <- list(
       RMSE = RMSE,
       MSE = MSE,
       MAE = MAE,
-      MASE = MASE # Ensure MASE is included here
+      MASE = MASE
     )
   }
 }
 
-# Convert metrics for Russian Federation to a dataframe
+# converting metrics for russia to a dataframe and making adjustments
 russia_metrics_df <- do.call(rbind, lapply(russia_metrics, function(x) do.call(data.frame, x)))
-
-# Fill missing MASE values with NA
-russia_metrics_df$MASE[is.nan(russia_metrics_df$MASE)] <- NA
-
 russia_metrics_df$Country <- "russia"
 russia_metrics_df$Model_Type <- "Multivariate Prophet"
-
 russia_metrics_df <- russia_metrics_df %>% 
   select(Country, Model_Type, RMSE, MSE, MAE, MASE)
 
-# Calculate average metrics across folds
+# calculating average metrics across folds
 russia_average_metrics <- colMeans(russia_metrics_df[, -which(names(russia_metrics_df) %in% c("Country", "Model_Type"))], na.rm = TRUE)
 
-# Create a dataframe with averaged metrics
+# creating a dataframe with averaged metrics
 russia_averaged_metrics_df <- data.frame(
   Country = "russia",
   Model_Type = "Multivariate Prophet",
@@ -190,10 +180,11 @@ russia_averaged_metrics_df <- data.frame(
 
 row.names(russia_averaged_metrics_df) <- NULL
 
-# Print averaged_metrics_df to check its structure
+# printing averaged_metrics_df to check its structure
 print("Printing averaged_metrics_df:")
 print(russia_averaged_metrics_df)
 
+# # joining all manually obtained metrics
 # multivar_prophet_maria <- rbind(bolivia_averaged_metrics_df,
 #                                 brazil_averaged_metrics_df,
 #                                 turkey_averaged_metrics_df,
