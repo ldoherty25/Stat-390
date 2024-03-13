@@ -79,20 +79,22 @@ print(turkey_metrics_table)
 
 
 
-# merging country metrics----
-
-xgboost_maria <- rbind(bolivia_metrics_table,
-                       brazil_metrics_table,
-                       russia_metrics_table,
-                       us_metrics_table,
-                       iran_metrics_table,
-                       saudi_metrics_table,
-                       colombia_metrics_table,
-                       mexico_metrics_table,
-                       turkey_metrics_table,
-                       peru_metrics_table)
-
-xgboost_maria <- xgboost_maria %>%
-  arrange(RMSE)
-
-save(xgboost_maria, file = "data_frames/xgboost_maria.rda")
+# # merging country metrics----
+# 
+# xgboost_maria <- rbind(bolivia_metrics_table,
+#                        brazil_metrics_table,
+#                        russia_metrics_table,
+#                        us_metrics_table,
+#                        iran_metrics_table,
+#                        saudi_metrics_table,
+#                        colombia_metrics_table,
+#                        mexico_metrics_table,
+#                        turkey_metrics_table,
+#                        peru_metrics_table)
+# 
+# xgboost_maria <- xgboost_maria %>%
+#   arrange(RMSE)
+# 
+# xgboost_maria$Model_Type <- "XGBoost"
+# 
+# save(xgboost_maria, file = "data_frames/xgboost_maria.rda")
