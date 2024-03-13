@@ -1,55 +1,98 @@
+## Multivariate XGBoost
 
-# Load the model
+
+
+# primary checks ----
+
+# load packages
+library(dplyr)
+library(xgboost)
+library(caret)
+library(doMC)
+library(ggplot2)
+
+# set up parallel processing 
+registerDoMC(cores = 8)
+
+# handling common conflicts
+conflicted::conflict_prefer("filter", "dplyr")
+
+# setting a seed
+set.seed(1234)
+
+
+
+# loading files ----
 load("xgboost_components/xgb_model_ii_maria.rda")
-
-# Load the testing dataset
 load("data/preprocessed/multivariate/not_split/preprocessed_covid_multi_imputed.rda")
 
-# Select only the data for Bolivia after applying the same preprocessing steps as done for the entire dataset
-bolivia_testing_df <- preprocessed_covid_multi_imputed %>%
-  filter(country == "Bolivia") %>%
+
+
+# building metric set for each country ----
+turkey_testing_df <- preprocessed_covid_multi_imputed %>%
+  filter(country == "Peru") %>%
   janitor::clean_names() %>%
   mutate(ds = as.Date(date), y = owid_new_deaths) %>%
   arrange(ds) %>%
   select(-country, -date) # Keep 'ds' for now to ensure we have a date column for arranging
 
-# Check for character columns and convert them to factors then to numeric
-bolivia_test_data <- bolivia_testing_df %>%
-  mutate_if(is.character, as.factor) %>% # Convert character columns to factors
-  mutate_if(is.factor, as.numeric) %>% # Then convert factors to numeric
-  select(-ds, -y) # Finally, exclude the date and target variable
+# ckecking for character columns and converting them to factors then to numeric
+turkey_test_data <- turkey_testing_df %>%
+  mutate_if(is.character, as.factor) %>%
+  mutate_if(is.factor, as.numeric) %>%
+  select(-ds, -y)
 
-# Ensure the data is all numeric now
-if (any(sapply(bolivia_test_data, is.character))) {
+# ensuring the data is all numeric now
+if (any(sapply(turkey_test_data, is.character))) {
   stop("Data still contains non-numeric columns.")
 }
 
-# Convert to matrix for prediction
-bolivia_test_data_matrix <- as.matrix(bolivia_test_data)
+# converting to matrix for prediction
+turkey_test_data_matrix <- as.matrix(turkey_test_data)
 
-# Make predictions for Bolivia
-bolivia_predictions <- predict(xgb_model_ii, bolivia_test_data_matrix)
+# making predictions
+turkey_predictions <- predict(xgb_model_ii, turkey_test_data_matrix)
 
-# Extract the actual values for 'y' from the Bolivian testing dataframe
-bolivia_actuals <- bolivia_testing_df$y
+# extracting the actual values for 'y' from testing dataframe
+turkey_actuals <- turkey_testing_df$y
 
-# Calculate performance metrics for Bolivia
-bolivia_RMSE <- sqrt(mean((bolivia_predictions - bolivia_actuals)^2))
-bolivia_MAE <- mean(abs(bolivia_predictions - bolivia_actuals))
-bolivia_MSE <- mean((bolivia_predictions - bolivia_actuals)^2)
-bolivia_MAPE <- mean(abs((bolivia_predictions - bolivia_actuals) / bolivia_actuals), na.rm = TRUE)
-bolivia_MASE <- mean(abs(bolivia_predictions - bolivia_actuals)) / mean(abs(diff(na.omit(bolivia_actuals))), na.rm = TRUE)
+# calculating performance metrics
+turkey_RMSE <- sqrt(mean((turkey_predictions - turkey_actuals)^2))
+turkey_MAE <- mean(abs(turkey_predictions - turkey_actuals))
+turkey_MSE <- mean((turkey_predictions - turkey_actuals)^2)
+turkey_MAPE <- mean(abs((turkey_predictions - turkey_actuals) / turkey_actuals), na.rm = TRUE)
+turkey_MASE <- mean(abs(turkey_predictions - turkey_actuals)) / mean(abs(diff(na.omit(turkey_actuals))), na.rm = TRUE)
 
-# Create a data frame for the metrics for Bolivia
-bolivia_metrics_table <- data.frame(
-  Country = "Bolivia",
+# creating a data frame for the metrics
+turkey_metrics_table <- data.frame(
+  Country = "turkey",
   Best_Model = "Multivariate XGBoost",
-  RMSE = bolivia_RMSE, 
-  MAE = bolivia_MAE, 
-  MSE = bolivia_MSE, 
-  MAPE = bolivia_MAPE, 
-  MASE = bolivia_MASE
+  RMSE = turkey_RMSE, 
+  MAE = turkey_MAE, 
+  MSE = turkey_MSE, 
+  MAPE = turkey_MAPE, 
+  MASE = turkey_MASE
 )
 
-# Print the metrics for Bolivia
-print(bolivia_metrics_table)
+# printing metrics
+print(turkey_metrics_table)
+
+
+
+# merging country metrics----
+
+xgboost_maria <- rbind(bolivia_metrics_table,
+                       brazil_metrics_table,
+                       russia_metrics_table,
+                       us_metrics_table,
+                       iran_metrics_table,
+                       saudi_metrics_table,
+                       colombia_metrics_table,
+                       mexico_metrics_table,
+                       turkey_metrics_table,
+                       peru_metrics_table)
+
+xgboost_maria <- xgboost_maria %>%
+  arrange(RMSE)
+
+save(xgboost_maria, file = "data_frames/xgboost_maria.rda")
