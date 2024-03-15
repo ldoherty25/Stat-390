@@ -611,9 +611,9 @@ numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
 
-# establish threshold to reduce dimensions
-# (drop if the absolute value of correlation coefficient is under 0.5)
-correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
+# # establish threshold to reduce dimensions
+# # (drop if the absolute value of correlation coefficient is under 0.5)
+# correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 
 # adapt to ggplot2
 # (convert wide-format data to long-format data)
@@ -645,14 +645,16 @@ cf_preprocessed_multi <- preprocessed_covid_multi_imputed %>%
 ## (updated) general correlation matrix ----
 
 # filter out numerical data
-numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric)
+numerical_data <- preprocessed_covid_multi_imputed %>% select_if(is.numeric) %>% select(-c(month,
+                                                                                           cyclical_month_sin,
+                                                                                           cyclical_month_cos))
 
 # create a correlation matrix
 correlation_matrix <- cor(numerical_data, use = "complete.obs")
 
-# establish threshold to reduce dimensions
-# (drop if the absolute value of correlation coefficient is under 0.5)
-correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
+# # establish threshold to reduce dimensions
+# # (drop if the absolute value of correlation coefficient is under 0.5)
+# correlation_matrix[abs(correlation_matrix) < 0.5] <- NA
 
 # adapt to ggplot2
 # (convert wide-format data to long-format data)
