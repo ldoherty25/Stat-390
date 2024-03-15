@@ -422,12 +422,11 @@ generate_acf_pacf_plots <- function(country_name) {
 
 # generating plots for each country
 plots_list <- lapply(countries, generate_acf_pacf_plots)
-# Error in plot.new() : figure margins too large !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # determining layout and margins
 par(mfrow = c(5, 4), mar = c(5, 2, 2, 2) + 0.1)
 
-# determining plot preferences (ISSUE HERE)
+# determining plot preferences
 for (i in 1:length(plots_list)) {
   if (!is.null(plots_list[[i]])) {
     country_data <- preprocessed_covid_multi %>%
